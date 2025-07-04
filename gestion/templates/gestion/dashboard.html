@@ -1,0 +1,14 @@
+{% extends 'gestion/base.html' %}
+
+{% block title %}Dashboard - CMDB{% endblock %}
+
+{% block content %}
+    <div class="main-content">
+        <h1>Dashboard Principal</h1>
+        <p>Seleccione una opción para comenzar a gestionar sus activos.</p>
+        <div class="action-buttons">
+            <a href="{% url 'gestion:incidencias' %}" class="btn">Gestionar Incidencias</a>
+            <a href="#" class="btn">Gestión de RCA</a>
+        </div>
+    </div>
+{% endblock content %}

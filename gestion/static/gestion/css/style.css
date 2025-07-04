@@ -1,0 +1,714 @@
+/* --- ================================== --- */
+
+
+/* ---        PALETA DE COLORES         --- */
+
+
+/* --- ================================== --- */
+
+:root {
+    --color-morado-oscuro: #260717;
+    /* Fondo principal */
+    --color-morado: #480E2A;
+    /* Navbar, Footer y contenedores */
+    --color-purpura: #FF0054;
+    /* Elementos de acción y botones */
+    --color-blanco: #FFFFFF;
+    /* Texto principal */
+    --color-gris-ceramica: #E3E2DA;
+    /* Fondos de cajas y elementos destacados */
+    --color-texto-oscuro: #260717;
+    /* Texto sobre fondos claros */
+    --color-texto-secundario: #bcaec6;
+    /* Texto secundario o menos importante */
+}
+
+
+/* --- ================================== --- */
+
+
+/* ---        ESTILOS GLOBALES          --- */
+
+
+/* --- ================================== --- */
+
+body,
+html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    font-family: 'Lato', sans-serif;
+    background-color: var(--color-morado-oscuro);
+    /* FONDO: Morado Oscuro */
+    color: var(--color-blanco);
+    /* TEXTO: Blanco */
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* --- ================================== --- */
+
+
+/* ---     ESTRUCTURA DE LA PÁGINA        --- */
+
+
+/* --- ================================== --- */
+
+.main-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.main-title {
+    font-size: 2.2em;
+    font-weight: 300;
+    color: var(--color-blanco);
+    /* TEXTO: Blanco */
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+    text-align: center;
+}
+
+
+/* --- ================================== --- */
+
+
+/* ---  ESTILOS EXCLUSIVOS PARA EL LOGIN  --- */
+
+
+/* --- ================================== --- */
+
+.login-box {
+    background-color: var(--color-gris-ceramica);
+    /* GRIS: Para contraste */
+    color: var(--color-texto-oscuro);
+    /* TEXTO: Oscuro para legibilidad */
+    padding: 40px 50px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 380px;
+    text-align: center;
+    border-top: 5px solid var(--color-purpura);
+    /* PÚRPURA: Acento de color */
+    animation: fadeIn 0.6s ease-out;
+}
+
+.login-box h1 {
+    font-weight: 400;
+    color: var(--color-texto-oscuro);
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.login-box p {
+    color: #5c5357;
+    /* Un tono oscuro derivado del morado */
+    margin-bottom: 30px;
+    font-weight: 300;
+}
+
+.login-box .input-group {
+    margin-bottom: 20px;
+    /* Espacio añadido entre los campos */
+}
+
+.login-box .input-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.9em;
+    color: var(--color-texto-oscuro);
+    font-weight: 400;
+}
+
+.login-box .input-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    color: var(--color-texto-oscuro);
+    border-radius: 4px;
+    font-size: 1em;
+    box-sizing: border-box;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.login-box .input-group input:focus {
+    outline: none;
+    border-color: var(--color-purpura);
+    box-shadow: 0 0 5px var(--color-purpura);
+}
+
+.login-box button {
+    background-color: var(--color-purpura);
+    /* BOTÓN: Púrpura */
+    color: var(--color-blanco);
+    border: none;
+    padding: 15px;
+    border-radius: 4px;
+    font-size: 1.1em;
+    font-weight: 400;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 10px;
+    width: 100%;
+}
+
+.login-box button:hover {
+    background-color: #d10046;
+    /* Un tono más oscuro de púrpura */
+}
+
+.login-box .login-footer a {
+    color: #5c5357;
+    text-decoration: none;
+    font-size: 0.9em;
+    transition: color 0.3s;
+}
+
+.login-box .login-footer a:hover {
+    color: var(--color-purpura);
+}
+
+
+/* --- ================================== --- */
+
+
+/* ---        ESTILOS DEL NAVBAR          --- */
+
+
+/* --- ================================== --- */
+
+.navbar {
+    width: 100%;
+    background-color: var(--color-morado);
+    /* NAVBAR: Morado */
+    padding: 15px 30px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;
+    border-bottom: 3px solid var(--color-purpura);
+}
+
+.navbar-brand {
+    font-size: 1.8em;
+    font-weight: 700;
+    color: var(--color-blanco);
+    letter-spacing: 2px;
+}
+
+.navbar-links {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+
+/* Nota: Se mantiene el color rojo para logout por semántica de "acción de salida" */
+
+.navbar-logout {
+    background-color: #e74c3c;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-size: 1em;
+    font-weight: 400;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.3s;
+}
+
+.navbar-logout:hover {
+    background-color: #c0392b;
+}
+
+.navbar-link {
+    color: var(--color-blanco);
+    text-decoration: none;
+    font-weight: 400;
+    padding: 10px 15px;
+    border-radius: 4px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.navbar-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+
+/* --- ================================== --- */
+
+
+/* ---    ESTILOS DEL CONTENIDO PRINCIPAL --- */
+
+
+/* --- ================================== --- */
+
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    text-align: center;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 20px;
+}
+
+.btn {
+    background-color: var(--color-purpura);
+    /* BOTÓN: Púrpura */
+    color: var(--color-blanco);
+    border: none;
+    padding: 20px 40px;
+    border-radius: 4px;
+    font-size: 1.2em;
+    font-weight: 400;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    min-width: 200px;
+    text-decoration: none;
+}
+
+.btn:hover {
+    background-color: #d10046;
+    /* Tono más oscuro de púrpura */
+    transform: translateY(-3px);
+}
+
+
+/* --- ================================== --- */
+
+
+/* ---        ESTILOS DEL VISOR DE LOGS   --- */
+
+
+/* --- ================================== --- */
+
+.log-container {
+    background-color: var(--color-morado);
+    /* GRIS: Contenedor destacado */
+    color: var(--color-gris-ceramica);
+    border: 1px solid var(--color-purpura);
+    border-radius: 8px;
+    padding: 20px;
+    width: 80%;
+    max-width: 1200px;
+    margin-top: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    /* ===== INICIO DE LA MODIFICACIÓN ===== */
+    max-height: 65vh;
+    /* Establece una altura máxima relativa a la pantalla */
+    overflow-y: auto;
+    /* Agrega una barra de scroll si el contenido la excede */
+    /* ===== FIN DE LA MODIFICACIÓN ===== */
+}
+
+.log-content {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9em;
+    text-align: left;
+}
+
+
+/* --- ================================== --- */
+
+
+/* ---        ESTILOS DEL FOOTER          --- */
+
+
+/* --- ================================== --- */
+
+.footer {
+    width: 100%;
+    background-color: var(--color-morado);
+    /* FOOTER: Morado */
+    color: var(--color-blanco);
+    padding: 20px;
+    text-align: center;
+    box-sizing: border-box;
+    font-size: 0.9em;
+}
+
+.footer p {
+    margin: 0;
+    color: var(--color-texto-secundario);
+}
+
+
+/* --- ================================== --- */
+
+
+/* ---        ESTILOS DE MENSAJES       --- */
+
+
+/* --- ================================== --- */
+
+
+/* Nota: Se mantienen los colores originales para los mensajes de error/info
+   ya que son convenciones de UI importantes para el usuario. */
+
+.messages {
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.message {
+    padding: 15px;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: 400;
+    list-style: none;
+}
+
+.message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.message.info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+
+/* --- ================================== --- */
+
+
+/* --- ESTILOS PÁGINA DE INCIDENCIAS    --- */
+
+
+/* --- ================================== --- */
+
+.page-container {
+    width: 95%;
+    max-width: 1600px;
+    margin: 20px auto;
+    padding: 10px;
+}
+
+.page-title {
+    color: var(--color-blanco);
+    font-weight: 400;
+    margin-bottom: 25px;
+}
+
+
+/* Estilos del contenedor de filtros */
+
+.filter-box {
+    background-color: var(--color-morado);
+    border: 1px solid var(--color-purpura);
+    border-radius: 8px;
+    padding: 20px 25px;
+    margin-bottom: 25px;
+}
+
+.filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.filter-header h3 {
+    margin: 0;
+    color: var(--color-blanco);
+    font-weight: 400;
+}
+
+.btn-secondary {
+    background-color: transparent;
+    border: 1px solid var(--color-gris-ceramica);
+    color: var(--color-gris-ceramica);
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background-color: var(--color-purpura);
+    color: var(--color-blanco);
+    border-color: var(--color-purpura);
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.filter-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.9em;
+    color: var(--color-texto-secundario);
+}
+
+.filter-group input[type="text"],
+.filter-group input[type="date"],
+.filter-group select {
+    width: 100%;
+    background-color: var(--color-morado-oscuro);
+    color: var(--color-blanco);
+    border: 1px solid var(--color-texto-secundario);
+    border-radius: 4px;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.filter-group input:focus,
+.filter-group select:focus {
+    outline: none;
+    border-color: var(--color-purpura);
+}
+
+.filter-btn {
+    margin-top: 20px;
+    background-color: var(--color-purpura);
+}
+
+
+/* Contenedor de botones de acción */
+
+.action-buttons-container {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.btn-report {
+    background-color: #1a6a35;
+    /* Un verde para reportes */
+}
+
+.btn-report:hover {
+    background-color: #2a8c4d;
+}
+
+
+/* Estilos de la tabla de datos */
+
+.table-container {
+    overflow-x: auto;
+    /* Scroll horizontal en pantallas pequeñas */
+    background-color: var(--color-morado);
+    border-radius: 8px;
+    border: 1px solid var(--color-purpura);
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--color-blanco);
+}
+
+.data-table th,
+.data-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-morado-oscuro);
+}
+
+.data-table thead tr {
+    background-color: var(--color-morado-oscuro);
+    color: var(--color-blanco);
+}
+
+.data-table tbody tr:hover {
+    background-color: #3a1c32;
+    /* Sutil hover morado oscuro */
+}
+
+.data-table td .edit-link {
+    color: var(--color-purpura);
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.data-table td .edit-link:hover {
+    text-decoration: underline;
+}
+
+
+/* Estilos para la tabla de aplicaciones y DataTables */
+
+.page-header {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    /* 1. Apila los elementos verticalmente */
+    align-items: center;
+    /* 2. Centra los elementos horizontalmente */
+    margin-bottom: 15px;
+    /* Espacio debajo del botón y antes de la tabla */
+}
+
+
+/* Espacio entre el título y el botón */
+
+.page-header .page-title {
+    margin-bottom: 20px;
+}
+
+.table-container {
+    background-color: #2c2f33;
+    /* Un poco más claro que el fondo para destacar */
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #c3073f;
+}
+
+
+/* Estilos generales de la tabla */
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #e0e0e0;
+}
+
+.data-table thead th {
+    background-color: #1f2833;
+    color: #ff0055;
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 2px solid #c3073f;
+    font-weight: 700;
+}
+
+.data-table tbody td {
+    padding: 10px 15px;
+    border-bottom: 1px solid #454a52;
+}
+
+.data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.data-table tbody tr:hover {
+    background-color: #3a3e44;
+}
+
+
+/* Estilos para los iconos de editar/eliminar */
+
+.btn-icon {
+    background: none;
+    border: none;
+    color: #e0e0e0;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.btn-icon.btn-edit:hover {
+    color: #00aaff;
+    /* Azul para editar */
+}
+
+.btn-icon.btn-delete:hover {
+    color: #ff0055;
+    /* Magenta para eliminar */
+}
+
+.text-center {
+    text-align: center;
+}
+
+
+/* Estilos para los controles de DataTables */
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate {
+    color: #e0e0e0 !important;
+    margin-bottom: 15px;
+}
+
+.dataTables_wrapper .dataTables_length select,
+.dataTables_wrapper .dataTables_filter input {
+    background-color: #1f2833;
+    color: #e0e0e0;
+    border: 1px solid #c3073f;
+    border-radius: 4px;
+    padding: 5px;
+    margin-left: 5px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    color: #e0e0e0 !important;
+    border: 1px solid #c3073f;
+    margin: 0 2px;
+    border-radius: 4px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+    background: #c3073f !important;
+    color: #fff !important;
+    border-color: #c3073f;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: #ff0055 !important;
+    color: #fff !important;
+    border-color: #ff0055;
+}
+
+
+/* Estilo para los botones principales */
+
+.btn.btn-primary {
+    background-color: #ff0055;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.btn.btn-primary:hover {
+    background-color: #c3073f;
+}

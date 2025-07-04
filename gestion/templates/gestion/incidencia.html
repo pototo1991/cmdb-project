@@ -1,0 +1,108 @@
+{% extends 'gestion/base.html' %}
+{% load static %}
+
+{% block title %}Gestión de Incidencias - CMDB{% endblock %}
+
+{# Llenamos el bloque con los botones específicos para esta página #}
+{% block extra_nav_buttons %}
+    <a href="{% url 'gestion:incidencias' %}" class="navbar-link">Listado Incidencias</a>
+    <a href="{% url 'gestion:codigos_cierre' %}" class="navbar-link">Mantenedor Códigos de Cierre</a>
+    <a href="{% url 'gestion:aplicaciones' %}" class="navbar-link">Mantenedor Aplicaciones</a>
+{% endblock extra_nav_buttons %}
+
+
+{% block content %}
+<div class="page-container">
+    <h1 class="page-title">Listado de Incidencias</h1>
+
+    <form method="get" action="">
+        <div class="filter-box">
+            <div class="filter-header">
+                <h3>Filtros de Búsqueda</h3>
+                <button id="toggle-filters-btn" class="btn-secondary" type="button">Ocultar</button>
+            </div>
+            <div id="filter-container">
+                <div class="filter-grid">
+                    <div class="filter-group">
+                        <label for="codigo-cierre">Código de Cierre:</label>
+                        <input type="text" id="codigo-cierre" name="codigo-cierre">
+                    </div>
+                    <div class="filter-group">
+                        <label for="fecha-desde">Fecha de Cierre (Desde):</label>
+                        <input type="date" id="fecha-desde" name="fecha-desde">
+                    </div>
+                    <div class="filter-group">
+                        <label for="fecha-hasta">Fecha de Cierre (Hasta):</label>
+                        <input type="date" id="fecha-hasta" name="fecha-hasta">
+                    </div>
+                    <div class="filter-group">
+                        <label for="aplicativo">Aplicativo:</label>
+                        <select id="aplicativo" name="aplicativo">
+                            <option value="">Todos</option>
+                            <option value="app1">Aplicación 1</option>
+                            <option value="app2">Aplicación 2</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="bloque">Bloques:</label>
+                        <select id="bloque" name="bloque">
+                            <option value="">Todos</option>
+                            <option value="bloque1">Bloque 1</option>
+                            <option value="bloque2">Bloque 2</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn filter-btn">Filtrar</button>
+            </div>
+        </div>
+    </form>
+
+    <div class="action-buttons-container">
+        <button class="btn">Registrar Incidencia</button>
+        <button class="btn">Carga Masiva</button>
+        <button class="btn btn-report">Generar Reporte</button>
+    </div>
+
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Eliminar</th>
+                    <th>Editar</th>
+                    <th>Incidencia</th>
+                    <th>Aplicación</th>
+                    <th>Código de Cierre</th>
+                    <th>Fecha de Cierre</th>
+                    <th>Criticidad</th>
+                    <th>Análisis Técnico</th>
+                    <th>Solución</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><input type="checkbox"></td>
+                    <td><a href="#" class="edit-link">Editar</a></td>
+                    <td>INC000003487299</td>
+                    <td>FATEM</td>
+                    <td>fate_gene_o0005</td>
+                    <td>2025-07-03</td>
+                    <td>Alta</td>
+                    <td>Se reporta una alerta por consumo de CPU en prd8150...</td>
+                    <td>No replica en producción.</td>
+                </tr>
+                <tr>
+                    <td><input type="checkbox"></td>
+                    <td><a href="#" class="edit-link">Editar</a></td>
+                    <td>INC000003487298</td>
+                    <td>CRM</td>
+                    <td>user_error_x01</td>
+                    <td>2025-07-02</td>
+                    <td>Media</td>
+                    <td>El usuario reporta error al cargar la vista de clientes...</td>
+                    <td>Se ajustan permisos.</td>
+                </tr>
+                </tbody>
+        </table>
+    </div>
+</div>
+{% endblock content %}

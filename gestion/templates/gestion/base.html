@@ -1,0 +1,56 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CMDB{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'gestion/css/style.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css">
+
+</head>
+<body>
+
+    {% block navbar %}
+        <div class="navbar">
+            <a href="{% url 'gestion:dashboard' %}" class="navbar-brand">CMDB Incidencias</a>
+            <div class="navbar-links">
+                {% if user.is_superuser %}
+                <a href="{% url 'gestion:view_logs' %}" class="navbar-link">Ver Logs</a>
+                {% endif %}
+
+                {# Este es el nuevo bloque para botones adicionales #}
+                {% block extra_nav_buttons %}{% endblock extra_nav_buttons %}
+
+                <form id="logout-form" action="{% url 'gestion:logout' %}" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="navbar-logout">
+                        Cerrar Sesión
+                    </button>
+                </form>
+            </div>
+        </div>
+    {% endblock navbar %}
+
+    {% block content %}
+    {# El contenido específico de cada página irá aquí #}
+    {% endblock content %}
+
+    {% block footer %}
+        <div class="footer">
+            <p id="footer-date"></p>
+        </div>
+    {% endblock footer %}
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.js"></script>
+    
+    <script src="{% static 'gestion/js/script.js' %}"></script>
+    
+    {% block extra_scripts %}{% endblock extra_scripts %}
+
+</body>
+</html>

@@ -1,0 +1,69 @@
+{% extends 'gestion/base.html' %}
+{% load static %}
+
+{% block title %}Códigos de Cierre - CMDB{% endblock %}
+
+{% block extra_nav_buttons %}
+    <a href="{% url 'gestion:incidencias' %}" class="navbar-link">Listado Incidencias</a>
+    <a href="{% url 'gestion:codigos_cierre' %}" class="navbar-link">Mantenedor Códigos de Cierre</a>
+    <a href="{% url 'gestion:aplicaciones' %}" class="navbar-link">Mantenedor Aplicaciones</a>
+{% endblock extra_nav_buttons %}
+
+{% block content %}
+<div class="main-content">
+    <div class="page-header">
+        <h1 class="page-title">Listado de Códigos de Cierre</h1>
+        <a href="#" class="btn btn-primary">Registrar Código de Cierre</a>
+    </div>
+
+    <div class="table-container">
+        <table id="tabla-codigos-cierre" class="data-table">
+            <thead>
+                <tr>
+                    <th>Eliminar</th>
+                    <th>Editar</th>
+                    <th>Código de Cierre</th>
+                    <th>Descripción</th>
+                    <th>Aplicación</th>
+                    <th>Causa de Cierre</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for codigo in lista_de_codigos %}
+                <tr>
+                    <td class="text-center">
+                        <button class="btn-icon btn-delete" title="Eliminar">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                    <td class="text-center">
+                        <a href="#" class="btn-icon btn-edit" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </td>
+                    <td>{{ codigo.cod_cierre }}</td>
+                    <td>{{ codigo.desc_cod_cierre }}</td>
+                    <td>{{ codigo.aplicacion.nombre_aplicacion }}</td>
+                    <td>{{ codigo.causa_cierre }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_scripts %}
+<script>
+$(document).ready(function() {
+    // Activamos DataTables para esta tabla específica
+    $('#tabla-codigos-cierre').DataTable({
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json"
+        },
+        "pageLength": 10,
+        "order": [[ 2, "asc" ]] // Ordenar por la columna 'Código de Cierre' por defecto
+    });
+});
+</script>
+{% endblock extra_scripts %}
