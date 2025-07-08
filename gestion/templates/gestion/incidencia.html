@@ -3,13 +3,11 @@
 
 {% block title %}Gestión de Incidencias - CMDB{% endblock %}
 
-{# Llenamos el bloque con los botones específicos para esta página #}
 {% block extra_nav_buttons %}
     <a href="{% url 'gestion:incidencias' %}" class="navbar-link">Listado Incidencias</a>
     <a href="{% url 'gestion:codigos_cierre' %}" class="navbar-link">Mantenedor Códigos de Cierre</a>
     <a href="{% url 'gestion:aplicaciones' %}" class="navbar-link">Mantenedor Aplicaciones</a>
 {% endblock extra_nav_buttons %}
-
 
 {% block content %}
 <div class="page-container">
@@ -19,9 +17,9 @@
         <div class="filter-box">
             <div class="filter-header">
                 <h3>Filtros de Búsqueda</h3>
-                <button id="toggle-filters-btn" class="btn-secondary" type="button">Ocultar</button>
+                <button id="toggle-filters-btn" class="btn-secondary" type="button">Mostrar Filtros</button>
             </div>
-            <div id="filter-container">
+            <div id="filter-container" style="display: none;">
                 <div class="filter-grid">
                     <div class="filter-group">
                         <label for="codigo-cierre">Código de Cierre:</label>
@@ -64,7 +62,7 @@
     </div>
 
     <div class="table-container">
-        <table class="data-table">
+        <table id="tabla-incidencias" class="data-table">
             <thead>
                 <tr>
                     <th>Eliminar</th>
@@ -79,30 +77,43 @@
                 </tr>
             </thead>
             <tbody>
+                {% for incidencia in lista_de_incidencias %}
                 <tr>
-                    <td><input type="checkbox"></td>
-                    <td><a href="#" class="edit-link">Editar</a></td>
-                    <td>INC000003487299</td>
-                    <td>FATEM</td>
-                    <td>fate_gene_o0005</td>
-                    <td>2025-07-03</td>
-                    <td>Alta</td>
-                    <td>Se reporta una alerta por consumo de CPU en prd8150...</td>
-                    <td>No replica en producción.</td>
+                    <td class="text-center">
+                        <button class="btn-icon btn-delete" title="Eliminar">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                    <td class="text-center">
+                        <a href="#" class="btn-icon btn-edit" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </td>
+                    <td>{{ incidencia.numero_incidencia }}</td>
+                    <td>{{ incidencia.aplicacion.nombre_aplicacion }}</td>
+                    <td>{{ incidencia.codigo_cierre.cod_cierre }}</td>
+                    <td>{{ incidencia.fecha_cierre|date:"Y-m-d" }}</td>
+                    <td>{{ incidencia.criticidad.desc_criticidad }}</td>
+                    <td>{{ incidencia.analisis_tecnico }}</td>
+                    <td>{{ incidencia.solucion }}</td>
                 </tr>
-                <tr>
-                    <td><input type="checkbox"></td>
-                    <td><a href="#" class="edit-link">Editar</a></td>
-                    <td>INC000003487298</td>
-                    <td>CRM</td>
-                    <td>user_error_x01</td>
-                    <td>2025-07-02</td>
-                    <td>Media</td>
-                    <td>El usuario reporta error al cargar la vista de clientes...</td>
-                    <td>Se ajustan permisos.</td>
-                </tr>
-                </tbody>
+                {% endfor %}
+            </tbody>
         </table>
     </div>
 </div>
 {% endblock content %}
+
+{% block extra_scripts %}
+<script>
+$(document).ready(function() {
+    $('#tabla-incidencias').DataTable({
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json"
+        },
+        "pageLength": 10,
+        "order": [[ 2, "asc" ]]
+    });
+});
+</script>
+{% endblock extra_scripts %}

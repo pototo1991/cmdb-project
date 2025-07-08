@@ -24,6 +24,13 @@ class Criticidad(models.Model):
         return self.desc_criticidad
 
 
+class Severidad(models.Model):
+    desc_severidad = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.desc_severidad
+
+
 class GrupoResolutor(models.Model):
     desc_grupo_resol = models.CharField(max_length=255, unique=True)
 
@@ -61,11 +68,11 @@ class Aplicacion(models.Model):
 
     # Relaciones
     bloque = models.ForeignKey(
-        Bloque, on_delete=models.PROTECT, related_name='aplicaciones')
+        Bloque, on_delete=models.PROTECT, null=True, blank=True)
     criticidad = models.ForeignKey(
-        Criticidad, on_delete=models.PROTECT, related_name='aplicaciones')
+        Criticidad, on_delete=models.PROTECT, null=True, blank=True)
     estado = models.ForeignKey(
-        Estado, on_delete=models.PROTECT, related_name='aplicaciones')
+        Estado, on_delete=models.PROTECT, null=True, blank=True)
 
     def __str__(self):
         return f"{self.cod_aplicacion} - {self.nombre_aplicacion}"
@@ -112,8 +119,12 @@ class Incidencia(models.Model):
     estado = models.ForeignKey(
         Estado, on_delete=models.PROTECT, related_name='incidencias'
     )
-    criticidad = models.ForeignKey(
-        Criticidad, on_delete=models.PROTECT, related_name='incidencias'
+    severidad = models.ForeignKey(
+        Severidad,
+        on_delete=models.PROTECT,
+        related_name='incidencias',
+        null=True,  # Permite valores nulos en la base de datos
+        blank=True  # Hace el campo opcional en los formularios
     )
     grupo_resolutor = models.ForeignKey(
         GrupoResolutor, on_delete=models.SET_NULL, null=True, blank=True, related_name='incidencias'

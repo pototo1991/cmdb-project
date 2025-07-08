@@ -130,7 +130,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # URL a la que se redirige a los usuarios si no están autenticados.
 # El decorador @login_required la utiliza.
-LOGIN_URL = 'login'  # Cambiamos 'home' por 'login'
+LOGIN_URL = 'gestion:login'  # Cambiamos 'home' por 'login'
 
 # Logging configuration
 LOGGING = {

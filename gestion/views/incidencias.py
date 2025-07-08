@@ -13,7 +13,19 @@ def incidencias_view(request):
     logger.info(
         f"El usuario '{request.user}' está viendo la lista de incidencias.")
     incidencias = Incidencia.objects.select_related(
-        'aplicacion', 'estado', 'criticidad', 'impacto'
+        'aplicacion', 'estado', 'severidad', 'impacto'
     ).all()
     context = {'lista_de_incidencias': incidencias}
+    return render(request, 'gestion/incidencia.html', context)
+
+
+def listar_incidencias(request):
+    # Obtenemos todas las incidencias desde la base de datos
+    incidencias = Incidencia.objects.all()
+
+    # Las pasamos a la plantilla a través del diccionario de contexto
+    context = {
+        'lista_de_incidencias': incidencias
+    }
+
     return render(request, 'gestion/incidencia.html', context)

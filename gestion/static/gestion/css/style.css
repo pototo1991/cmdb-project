@@ -525,50 +525,6 @@ body {
 }
 
 
-/* Estilos de la tabla de datos */
-
-.table-container {
-    overflow-x: auto;
-    /* Scroll horizontal en pantallas pequeñas */
-    background-color: var(--color-morado);
-    border-radius: 8px;
-    border: 1px solid var(--color-purpura);
-}
-
-.data-table {
-    width: 100%;
-    border-collapse: collapse;
-    color: var(--color-blanco);
-}
-
-.data-table th,
-.data-table td {
-    padding: 12px 15px;
-    text-align: left;
-    border-bottom: 1px solid var(--color-morado-oscuro);
-}
-
-.data-table thead tr {
-    background-color: var(--color-morado-oscuro);
-    color: var(--color-blanco);
-}
-
-.data-table tbody tr:hover {
-    background-color: #3a1c32;
-    /* Sutil hover morado oscuro */
-}
-
-.data-table td .edit-link {
-    color: var(--color-purpura);
-    text-decoration: none;
-    font-weight: bold;
-}
-
-.data-table td .edit-link:hover {
-    text-decoration: underline;
-}
-
-
 /* Estilos para la tabla de aplicaciones y DataTables */
 
 .page-header {
@@ -618,14 +574,28 @@ body {
 .data-table tbody td {
     padding: 10px 15px;
     border-bottom: 1px solid #454a52;
+    color: var(--color-texto-oscuro);
 }
 
 .data-table tbody tr:last-child td {
     border-bottom: none;
 }
 
-.data-table tbody tr:hover {
+
+/* --- ESTILOS DE HOVER PARA LA TABLA --- */
+
+
+/* Pone el fondo oscuro al pasar el cursor */
+
+#tabla-aplicaciones tbody tr:hover {
     background-color: #3a3e44;
+}
+
+
+/* Pone el texto blanco al pasar el cursor (esta ya la tienes) */
+
+#tabla-aplicaciones tbody tr:hover td {
+    color: var(--color-blanco);
 }
 
 
@@ -661,7 +631,7 @@ body {
 .dataTables_wrapper .dataTables_filter,
 .dataTables_wrapper .dataTables_info,
 .dataTables_wrapper .dataTables_paginate {
-    color: #e0e0e0 !important;
+    color: var(--color-blanco) !important;
     margin-bottom: 15px;
 }
 
@@ -675,8 +645,11 @@ body {
     margin-left: 5px;
 }
 
-.dataTables_wrapper .dataTables_paginate .paginate_button {
-    color: #e0e0e0 !important;
+
+/* REGLA CORREGIDA Y MÁS ESPECÍFICA PARA LA PAGINACIÓN */
+
+#tabla-aplicaciones_wrapper .dataTables_paginate .paginate_button {
+    color: var(--color-blanco) !important;
     border: 1px solid #c3073f;
     margin: 0 2px;
     border-radius: 4px;
@@ -711,4 +684,84 @@ body {
 
 .btn.btn-primary:hover {
     background-color: #c3073f;
+}
+
+
+/* --- ================================== --- */
+
+
+/* --- ESTILOS PARA FORMULARIO DE REGISTRO --- */
+
+
+/* --- ================================== --- */
+
+
+/* Contenedor principal del layout, usa CSS Grid */
+
+.registration-form-layout {
+    display: grid;
+    /* Definimos las áreas como en tu boceto */
+    grid-template-areas: "columna-izquierda columna-derecha" "botones-footer botones-footer";
+    grid-template-columns: 1fr 1fr;
+    /* Dos columnas de igual tamaño */
+    grid-template-rows: auto auto;
+    /* Las filas se ajustan al contenido */
+    gap: 30px 40px;
+    /* Espacio vertical y horizontal */
+    width: 100%;
+    max-width: 1000px;
+    /* Un poco más de espacio */
+}
+
+
+/* Asignamos cada clase a su área del grid */
+
+.form-left-column {
+    grid-area: columna-izquierda;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-right-column {
+    grid-area: columna-derecha;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-actions {
+    grid-area: botones-footer;
+    display: flex;
+    justify-content: space-between;
+    /* Distribuye los botones */
+    align-items: center;
+}
+
+
+/* Estilos para los campos (se mantienen) */
+
+.form-group {
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: var(--color-texto-secundario);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    background-color: var(--color-morado-oscuro);
+    color: var(--color-blanco);
+    border: 1px solid var(--color-texto-secundario);
+    border-radius: 4px;
+    padding: 12px;
+    box-sizing: border-box;
+    font-family: 'Lato', sans-serif;
+    font-size: 1em;
 }

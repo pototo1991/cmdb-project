@@ -13,7 +13,7 @@
 <div class="main-content">
     <div class="page-header">
         <h1 class="page-title">Listado de Aplicaciones</h1>
-        <a href="#" class="btn btn-primary">Registrar Aplicación</a>
+        <a href="{% url 'gestion:registrar_aplicacion' %}" class="btn btn-primary">Registrar Aplicación</a>
     </div>
 
     <div class="table-container">
@@ -34,12 +34,15 @@
                 {% for aplicacion in lista_de_aplicaciones %}
                 <tr>
                     <td class="text-center">
-                        <button class="btn-icon btn-delete" title="Eliminar">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
+                        <form action="{% url 'gestion:eliminar_aplicacion' aplicacion.id %}" method="post" onsubmit="return confirm('¿Estás seguro de que deseas eliminar esta aplicación?');" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-icon btn-delete" title="Eliminar">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </form>
                     </td>
                     <td class="text-center">
-                        <a href="#" class="btn-icon btn-edit" title="Editar">
+                        <a href="{% url 'gestion:editar_aplicacion' aplicacion.id %}" class="btn-icon btn-edit" title="Editar">
                             <i class="fas fa-edit"></i>
                         </a>
                     </td>
@@ -60,13 +63,58 @@
 {% block extra_scripts %}
 <script>
 $(document).ready(function() {
+    // INICIO DEL CÓDIGO COMPLETO Y CORREGIDO
     $('#tabla-aplicaciones').DataTable({
+
+        // Opción de lenguaje para textos en español
         "language": {
-            "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json"
+            "lengthMenu": "Mostrar _MENU_ registros por página",
+            "zeroRecords": "No se encontraron resultados",
+            "info": "Mostrando página _PAGE_ de _PAGES_",
+            "infoEmpty": "No hay registros disponibles",
+            "infoFiltered": "(filtrado de un total de _MAX_ registros)",
+            "search": "Filtrar por:",
+            "paginate": {
+                "first": "Primero",
+                "last": "Último",
+                "next": "Siguiente",
+                "previous": "Anterior"
+            }
         },
-        "pageLength": 10,
-        "order": [[ 2, "asc" ]]
+
+        // Menú para seleccionar cuántos registros mostrar
+        "lengthMenu": [
+            [10, 25, 50, 100, -1],
+            [10, 25, 50, 100, "Todas"]
+        ],
+
+        // Activa el scroll vertical en la tabla
+        "scrollY": "60vh",
+        "scrollCollapse": true,
+
+        // Asegura que la paginación esté activa
+        "paging": true,
+
+        // Registros a mostrar por defecto al cargar
+        "pageLength": 25,
+
+        // Orden inicial de la tabla (por la columna 'Código')
+        "order": [[ 2, "asc" ]],
+
+        // Función que se ejecuta cada vez que la tabla se redibuja
+        "drawCallback": function(settings) {
+            var totalRegistros = {{ total_registros }};
+            var totalInfo = '<div class="total-records-info">Total de registros existentes: <strong>' + totalRegistros + '</strong></div>';
+
+            // Revisa si el texto ya existe antes de agregarlo para evitar duplicados
+            if ($('#tabla-aplicaciones_info .total-records-info').length === 0) {
+                $('#tabla-aplicaciones_info').append(totalInfo);
+            }
+        }
     });
+    // FIN DEL CÓDIGO COMPLETO Y CORREGIDO
+
+
 });
 </script>
 {% endblock extra_scripts %}

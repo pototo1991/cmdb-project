@@ -1,0 +1,93 @@
+{% extends 'gestion/base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if aplicacion %}Editar Aplicación{% else %}Registrar Aplicación{% endif %} - CMDB
+{% endblock %}
+
+{% block extra_nav_buttons %}
+    {# Puedes mantener los mismos botones de navegación si quieres #}
+    <a href="{% url 'gestion:incidencias' %}" class="navbar-link">Listado Incidencias</a>
+    <a href="{% url 'gestion:codigos_cierre' %}" class="navbar-link">Mantenedor Códigos de Cierre</a>
+    <a href="{% url 'gestion:aplicaciones' %}" class="navbar-link">Mantenedor Aplicaciones</a>
+{% endblock extra_nav_buttons %}
+
+{% block content %}
+<div class="main-content">
+    <div class="page-header">
+        <h1 class="page-title">
+            {% if aplicacion %}Editar Aplicación{% else %}Registrar Nueva Aplicación{% endif %}
+        </h1>
+    </div>
+
+    <div class="table-container">
+        {# La acción del formulario ahora es dinámica #}
+        <form method="post" action="{% if aplicacion %}{% url 'gestion:editar_aplicacion' aplicacion.id %}{% else %}{% url 'gestion:registrar_aplicacion' %}{% endif %}">
+            {% csrf_token %}
+
+            <div class="registration-form-layout">
+
+                <div class="form-left-column">
+                    <div class="form-group">
+                        <label for="cod_aplicacion">Código Aplicación</label>
+                        {# El valor se rellena si estamos editando #}
+                        <input type="text" id="cod_aplicacion" name="cod_aplicacion" value="{{ aplicacion.cod_aplicacion|default:'' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="nombre_aplicacion">Nombre Aplicación</label>
+                        <input type="text" id="nombre_aplicacion" name="nombre_aplicacion" value="{{ aplicacion.nombre_aplicacion|default:'' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bloque">Bloque</label>
+                        <select id="bloque" name="bloque" required>
+                            <option value="">Seleccione...</option>
+                            {% for b in todos_los_bloques %}
+                                {# Se selecciona la opción correcta si estamos editando #}
+                                <option value="{{ b.id }}" {% if aplicacion.bloque.id == b.id %}selected{% endif %}>{{ b.desc_bloque }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-right-column">
+                    <div class="form-group">
+                        <label for="criticidad">Criticidad</label>
+                        <select id="criticidad" name="criticidad" required>
+                            <option value="">Seleccione...</option>
+                            {% for c in todas_las_criticidades %}
+                                <option value="{{ c.id }}" {% if aplicacion.criticidad.id == c.id %}selected{% endif %}>{{ c.desc_criticidad }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="estado">Estado</label>
+                        <select id="estado" name="estado" required>
+                            <option value="">Seleccione...</option>
+                            {% for e in todos_los_estados %}
+                                <option value="{{ e.id }}" {% if aplicacion.estado.id == e.id %}selected{% endif %}>{{ e.desc_estado }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="desc_aplicacion">Descripción</label>
+                        <textarea id="desc_aplicacion" name="desc_aplicacion" rows="4">{{ aplicacion.desc_aplicacion|default:'' }}</textarea>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    {# El texto del botón también es dinámico #}
+                    <button type="submit" class="btn btn-primary">
+                        {% if aplicacion %}Actualizar Aplicación{% else %}Guardar Aplicación{% endif %}
+                    </button>
+                    {% if not aplicacion %}
+                    <a href="{% url 'gestion:carga_masiva_aplicaciones' %}" class="btn btn-secondary">Carga Masiva</a>
+                    {% endif %}
+
+                    <a href="{% url 'gestion:aplicaciones' %}" class="btn btn-secondary">Cancelar</a>
+                </div>
+
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock content %}
