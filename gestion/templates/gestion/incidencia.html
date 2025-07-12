@@ -22,18 +22,6 @@
             <div id="filter-container" style="display: none;">
                 <div class="filter-grid">
                     <div class="filter-group">
-                        <label for="codigo-cierre">Código de Cierre:</label>
-                        <input type="text" id="codigo-cierre" name="codigo-cierre">
-                    </div>
-                    <div class="filter-group">
-                        <label for="fecha-desde">Fecha de Cierre (Desde):</label>
-                        <input type="date" id="fecha-desde" name="fecha-desde">
-                    </div>
-                    <div class="filter-group">
-                        <label for="fecha-hasta">Fecha de Cierre (Hasta):</label>
-                        <input type="date" id="fecha-hasta" name="fecha-hasta">
-                    </div>
-                    <div class="filter-group">
                         <label for="aplicativo">Aplicativo:</label>
                         <select id="aplicativo" name="aplicativo">
                             <option value="">Todos</option>
@@ -56,7 +44,7 @@
     </form>
 
     <div class="action-buttons-container">
-        <button class="btn">Registrar Incidencia</button>
+        <a href="{% url 'gestion:registrar_incidencia' %}" class="btn">Registrar Incidencia</a>
         <button class="btn">Carga Masiva</button>
         <button class="btn btn-report">Generar Reporte</button>
     </div>
@@ -69,11 +57,12 @@
                     <th>Editar</th>
                     <th>Incidencia</th>
                     <th>Aplicación</th>
-                    <th>Código de Cierre</th>
-                    <th>Fecha de Cierre</th>
-                    <th>Criticidad</th>
-                    <th>Análisis Técnico</th>
-                    <th>Solución</th>
+                    <th>Descripción</th>
+                    <th>Estado</th>
+                    <th>Severidad</th>
+                    <th>Impacto</th>
+                    <th>Bloque</th>
+                    <th>Fecha Apertura</th>
                 </tr>
             </thead>
             <tbody>
@@ -89,13 +78,14 @@
                             <i class="fas fa-edit"></i>
                         </a>
                     </td>
-                    <td>{{ incidencia.numero_incidencia }}</td>
-                    <td>{{ incidencia.aplicacion.nombre_aplicacion }}</td>
-                    <td>{{ incidencia.codigo_cierre.cod_cierre }}</td>
-                    <td>{{ incidencia.fecha_cierre|date:"Y-m-d" }}</td>
-                    <td>{{ incidencia.criticidad.desc_criticidad }}</td>
-                    <td>{{ incidencia.analisis_tecnico }}</td>
-                    <td>{{ incidencia.solucion }}</td>
+                    <td>{{ incidencia.incidencia }}</td>
+                    <td>{{ incidencia.aplicacion.cod_aplicacion }}</td>
+                    <td>{{ incidencia.descripcion_incidencia|truncatechars:40 }}</td>
+                    <td>{{ incidencia.estado.desc_estado }}</td>
+                    <td>{{ incidencia.severidad.desc_severidad }}</td>
+                    <td>{{ incidencia.impacto.desc_impacto }}</td>
+                    <td>{{ incidencia.bloque.desc_bloque }}</td>
+                    <td>{{ incidencia.fecha_apertura|date:"Y-m-d H:i" }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -111,8 +101,27 @@ $(document).ready(function() {
         "language": {
             "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json"
         },
-        "pageLength": 10,
+        "lengthMenu": [
+            [10, 25, 50, 100, -1],
+            [10, 25, 50, 100, "Todas"]
+        ],
+        "scrollY": "60vh",
+        "scrollCollapse": true,
+        "paging": true,
+        "pageLength": 25,
         "order": [[ 2, "asc" ]]
+    });
+
+    // Script para el botón de mostrar/ocultar filtros
+    $('#toggle-filters-btn').on('click', function() {
+        var filterContainer = $('#filter-container');
+        if (filterContainer.is(':visible')) {
+            filterContainer.slideUp();
+            $(this).text('Mostrar Filtros');
+        } else {
+            filterContainer.slideDown();
+            $(this).text('Ocultar Filtros');
+        }
     });
 });
 </script>

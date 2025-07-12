@@ -14,9 +14,8 @@ urlpatterns = [
     path('dashboard/', views.dashboard_view, name='dashboard'),
     path('logs/', views.view_logs, name='view_logs'),
     path('logs/download/', views.download_log_file, name='download_log'),
-    path('incidencias/', views.incidencias_view, name='incidencias'),
     path('aplicaciones/', views.aplicaciones_view, name='aplicaciones'),
-    path('codigos-cierre/', views.codigos_cierre_view, name='codigos_cierre'),
+
     path('aplicaciones/registrar/', views.registrar_aplicacion_view,
          name='registrar_aplicacion'),
     path('aplicaciones/eliminar/<int:pk>/',
@@ -25,4 +24,18 @@ urlpatterns = [
          views.editar_aplicacion_view, name='editar_aplicacion'),
     path('aplicaciones/cargar/', views.carga_masiva_view,
          name='carga_masiva_aplicaciones'),
+
+    path('codigos-cierre/', views.codigos_cierre_view, name='codigos_cierre'),
+    path('codigos-cierre/registrar/', views.registrar_cod_cierre_view,
+         name='registrar_cod_cierre'),
+    path('codigos-cierre/eliminar/<int:pk>/',
+         views.eliminar_cod_cierre_view, name='eliminar_cod_cierre'),
+    path('codigos-cierre/editar/<int:pk>/',
+         views.editar_cod_cierre_view, name='editar_cod_cierre'),
+    path('codigos-cierre/cargar/', views.carga_masiva_cod_cierre_view,
+         name='carga_masiva_cod_cierre'),
+
+    path('incidencias/', views.incidencias_view, name='incidencias'),
+    path('incidencias/registrar/', views.registrar_incidencia_view,
+         name='registrar_incidencia'),
 ]

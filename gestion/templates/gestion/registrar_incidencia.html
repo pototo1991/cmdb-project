@@ -1,0 +1,185 @@
+{% extends 'gestion/base.html' %}
+{% load static %}
+
+{% block title %}Registrar Incidencia{% endblock %}
+
+{% block extra_nav_buttons %}
+    <a href="{% url 'gestion:incidencias' %}" class="navbar-link">Listado Incidencias</a>
+    <a href="{% url 'gestion:codigos_cierre' %}" class="navbar-link">Mantenedor Códigos de Cierre</a>
+    <a href="{% url 'gestion:aplicaciones' %}" class="navbar-link">Mantenedor Aplicaciones</a>
+{% endblock extra_nav_buttons %}
+
+{% block content %}
+<div class="main-content">
+    <h1 class="page-title">Registrar Nueva Incidencia</h1>
+
+    {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+        <li class="message {{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <form method="post" action="{% url 'gestion:registrar_incidencia' %}" class="registration-form-layout" autocomplete="off">
+        {% csrf_token %}
+
+        <div class="form-column">
+            <div class="form-block">
+                <h3 class="form-block-title">Datos Principales</h3>
+                <div class="form-group">
+                    <label for="incidencia">ID Incidencia (*)</label>
+                    <input type="text" id="incidencia" name="incidencia" required>
+                </div>
+                <div class="form-group">
+                    <label for="aplicacion">Aplicación (*)</label>
+                    <select id="aplicacion" name="aplicacion" required>
+                        <option value="">Seleccione una aplicación...</option>
+                        {% for app in aplicaciones %}<option value="{{ app.id }}">{{ app.nombre_aplicacion }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="descripcion_incidencia">Descripción</label>
+                    <textarea id="descripcion_incidencia" name="descripcion_incidencia" rows="4"></textarea>
+                </div>
+            </div>
+
+            <div class="form-block">
+                <h3 class="form-block-title">Análisis y Solución</h3>
+                <div class="form-group">
+                    <label for="causa">Causa</label>
+                    <textarea id="causa" name="causa" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="tec_analisis">Análisis Técnico</label>
+                    <textarea id="tec_analisis" name="tec_analisis" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="correccion">Corrección</label>
+                    <textarea id="correccion" name="correccion" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="solucion_final">Solución Final</label>
+                    <textarea id="solucion_final" name="solucion_final" rows="3"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-column">
+            <div class="form-block">
+                <h3 class="form-block-title">Clasificación</h3>
+                <div class="form-group">
+                    <label for="estado">Estado (*)</label>
+                    <select id="estado" name="estado" required>
+                        <option value="" disabled selected>Seleccione un estado...</option>
+                        
+                        {% for est in estados %}
+                            <option value="{{ est.id }}">{{ est.desc_estado }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="impacto">Impacto (*)</label>
+                    <select id="impacto" name="impacto" required>
+                        <option value="" disabled selected>Seleccione un impacto...</option>
+                        
+                        {% for imp in impactos %}
+                            <option value="{{ imp.id }}">{{ imp.desc_impacto }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="severidad">Severidad</label>
+                    <select id="severidad" name="severidad">
+                        <option value="" disabled selected>Seleccione severidad...</option>
+                        
+                        {% for sev in severidades %}
+                            <option value="{{ sev.id }}">{{ sev.desc_severidad }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="bloque">Bloque (*)</label>
+                    <select id="bloque" name="bloque" required>
+                        <option value="" disabled selected>Seleccione un bloque...</option>
+
+                        {% for blq in bloques %}
+                            <option value="{{ blq.id }}">{{ blq.desc_bloque }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-block">
+                <h3 class="form-block-title">Detalles de Cierre</h3>
+                <div class="form-group">
+                    <label for="interfaz">Interfaz</label>
+                    <select id="interfaz" name="interfaz"><option value="">Seleccione una interfaz...</option>{% for ifaz in interfaces %}<option value="{{ ifaz.id }}">{{ ifaz.desc_interfaz }}</option>{% endfor %}</select>
+                </div>
+                <div class="form-group">
+                    <label for="cluster">Cluster</label>
+                    <select id="cluster" name="cluster"><option value="">Seleccione un cluster...</option>{% for clu in clusters %}<option value="{{ clu.id }}">{{ clu.desc_cluster }}</option>{% endfor %}</select>
+                </div>
+                <div class="form-group">
+                    <label for="codigo_cierre">Código de Cierre</label>
+                    <select id="codigo_cierre" name="codigo_cierre"><option value="">Seleccione un código...</option>{% for cod in codigos_cierre %}<option value="{{ cod.id }}">{{ cod.cod_cierre }}</option>{% endfor %}</select>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-column">
+            <div class="form-block">
+                <h3 class="form-block-title">Fechas y Asignación</h3>
+                <div class="form-group">
+                    <label for="fecha_apertura">Fecha de Apertura</label>
+                    <input type="datetime-local" id="fecha_apertura" name="fecha_apertura">
+                </div>
+                <div class="form-group">
+                    <label for="fecha_ultima_resolucion">Fecha de Resolución</label>
+                    <input type="datetime-local" id="fecha_ultima_resolucion" name="fecha_ultima_resolucion">
+                </div>
+                <div class="form-group">
+                    <label for="usuario_asignado">Usuario Asignado</label>
+                    <input type="text" id="usuario_asignado" name="usuario_asignado">
+                </div>
+                <div class="form-group">
+                    <label for="grupo_resolutor">Grupo Resolutor</label>
+                    <select id="grupo_resolutor" name="grupo_resolutor"><option value="">Seleccione un grupo...</option>{% for grupo in grupos_resolutores %}<option value="{{ grupo.id }}">{{ grupo.desc_grupo_resol }}</option>{% endfor %}</select>
+                </div>
+            </div>
+
+            <div class="form-block">
+                <h3 class="form-block-title">Bitácora y Notas</h3>
+                <div class="form-group">
+                    <label for="bitacora">Bitácora</label>
+                    <textarea id="bitacora" name="bitacora" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="observaciones">Observaciones</label>
+                    <textarea id="observaciones" name="observaciones" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="demandas">Demandas</label>
+                    <textarea id="demandas" name="demandas" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="workaround">Workaround Disponible</label>
+                    <select id="workaround" name="workaround" class="form-control">
+                        <option value="No" selected>No</option>
+                        <option value="Sí">Sí</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Registrar Incidencia</button>
+            <a href="#" class="btn btn-secondary">Carga Masiva Inicial</a>
+            <a href="{% url 'gestion:incidencias' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

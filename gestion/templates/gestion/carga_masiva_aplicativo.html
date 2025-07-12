@@ -1,0 +1,56 @@
+{% extends 'gestion/base.html' %}
+{% load static %}
+
+{% block title %}Carga Masiva de Aplicaciones - CMDB{% endblock %}
+
+{% block extra_nav_buttons %}
+    {# Puedes mantener los mismos botones de navegación si quieres #}
+    <a href="{% url 'gestion:incidencias' %}" class="navbar-link">Listado Incidencias</a>
+    <a href="{% url 'gestion:codigos_cierre' %}" class="navbar-link">Mantenedor Códigos de Cierre</a>
+    <a href="{% url 'gestion:aplicaciones' %}" class="navbar-link">Mantenedor Aplicaciones</a>
+{% endblock extra_nav_buttons %}
+
+{% block content %}
+<div class="main-content">
+    <div class="page-header">
+        <h1 class="page-title">Carga Masiva de Aplicaciones</h1>
+    </div>
+
+    <div class="table-container">
+        <p>
+            Seleccione un archivo CSV para cargar aplicaciones en el sistema.
+            El archivo debe tener las siguientes columnas en este orden:
+            <code>id_aplicacion, id_modulo, nombre_app, bloque, criticidad, estado, descripcion</code>.
+        </p>
+        <p>La primera fila (cabecera) será ignorada.</p>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="csv_file">Archivo CSV</label>
+                <input type="file" name="csv_file" id="csv_file" accept=".csv" required>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Cargar Archivo</button>
+                <a href="{% url 'gestion:aplicaciones' %}" class="btn btn-secondary">Volver al Listado</a>
+            </div>
+        </form>
+
+        {# Sección para mostrar los resultados después de la carga #}
+        {% if failed_rows %}
+            <hr>
+            <h3 style="color: #dc3545;">Registros con Errores ({{ failed_rows|length }})</h3>
+            <p>Los siguientes registros no pudieron ser procesados. Por favor, corríjalos y vuelva a intentarlo.</p>
+            <table class="data-table">
+                <thead>
+                    <tr><th>Línea</th><th>Datos</th><th>Error</th></tr>
+                </thead>
+                <tbody>
+                    {% for item in failed_rows %}<tr><td>{{ item.line }}</td><td>{{ item.row_data }}</td><td>{{ item.error }}</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+</div>
+{% endblock content %}

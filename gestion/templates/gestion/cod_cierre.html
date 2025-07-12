@@ -11,9 +11,10 @@
 
 {% block content %}
 <div class="main-content">
+    
     <div class="page-header">
         <h1 class="page-title">Listado de Códigos de Cierre</h1>
-        <a href="#" class="btn btn-primary">Registrar Código de Cierre</a>
+        <a href="{% url 'gestion:registrar_cod_cierre' %}" class="btn btn-primary">Registrar Código de Cierre</a>
     </div>
 
     <div class="table-container">
@@ -32,12 +33,15 @@
                 {% for codigo in lista_de_codigos %}
                 <tr>
                     <td class="text-center">
-                        <button class="btn-icon btn-delete" title="Eliminar">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
+                        <form action="{% url 'gestion:eliminar_cod_cierre' codigo.id %}" method="post" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este código de cierre?');" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-icon btn-delete" title="Eliminar">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </form>
                     </td>
                     <td class="text-center">
-                        <a href="#" class="btn-icon btn-edit" title="Editar">
+                        <a href="{% url 'gestion:editar_cod_cierre' codigo.id %}" class="btn-icon btn-edit" title="Editar">
                             <i class="fas fa-edit"></i>
                         </a>
                     </td>
@@ -56,13 +60,40 @@
 {% block extra_scripts %}
 <script>
 $(document).ready(function() {
-    // Activamos DataTables para esta tabla específica
     $('#tabla-codigos-cierre').DataTable({
         "language": {
-            "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json"
+            "lengthMenu": "Mostrar _MENU_ registros por página",
+            "zeroRecords": "No se encontraron resultados",
+            "info": "Mostrando página _PAGE_ de _PAGES_",
+            "infoEmpty": "No hay registros disponibles",
+            "infoFiltered": "(filtrado de un total de _MAX_ registros)",
+            "search": "Buscar por:",
+            "paginate": {
+                "first": "Primero",
+                "last": "Último",
+                "next": "Siguiente",
+                "previous": "Anterior"
+            }
         },
-        "pageLength": 10,
-        "order": [[ 2, "asc" ]] // Ordenar por la columna 'Código de Cierre' por defecto
+        "lengthMenu": [
+            [10, 25, 50, 100, -1],
+            [10, 25, 50, 100, "Todas"]
+        ],
+        "scrollY": "60vh",
+        "scrollCollapse": true,
+        "paging": true,
+        "pageLength": 25,
+        "order": [[ 2, "asc" ]],
+        "drawCallback": function(settings) {
+            var totalRegistros = {{ total_registros|default:0 }};
+            var totalInfo = '<div class="total-records-info">Total de registros existentes: <strong>' + totalRegistros + '</strong></div>';
+            if ($('#tabla-codigos-cierre_info .total-records-info').length === 0) {
+                // ===== INICIO DE LA CORRECCIÓN =====
+                // La variable estaba como 'TotalInfo' y debe ser 'totalInfo' (en minúscula).
+                $('#tabla-codigos-cierre_info').append(totalInfo);
+                // ===== FIN DE LA CORRECCIÓN =====
+            }
+        }
     });
 });
 </script>

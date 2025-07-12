@@ -128,7 +128,7 @@ def carga_masiva_view(request):
                 f"Intento de carga masiva por '{request.user}' con un archivo no válido o ausente.")
             messages.error(
                 request, 'Por favor, seleccione un archivo CSV válido.')
-            return render(request, 'gestion/carga_masiva.html')
+            return render(request, 'gestion/carga_masiva_aplicativo.html')
 
         criticidad_map = {
             'alta': 'critica', 'critica': 'critica', 'crítica': 'critica', 'media': 'no critica',
@@ -157,46 +157,61 @@ def carga_masiva_view(request):
                 decoded_file = csv_file.read().decode('latin-1')
 
             io_string = io.StringIO(decoded_file)
-            reader = csv.reader(io_string)
-            next(reader)  # Omitir cabecera
+            # Usar DictReader para leer por nombre de columna y especificar el delimitador
+            reader = csv.DictReader(io_string, delimiter=';')
 
             for line_number, row in enumerate(reader, start=2):
                 try:
-                    if not any(row):
+                    # Omitir filas donde todos los valores están vacíos
+                    if not any(field.strip() for field in row.values()):
                         continue
 
-                    # Los índices (row[1], row[2], etc.) coinciden con tu nueva estructura de CSV
-                    cod_aplicacion = row[1].strip()
-                    nombre_aplicacion = row[2].strip()
-                    desc_aplicacion = row[6].strip()
+                    # 1. Extraer y validar el ID de la aplicación (clave primaria)
+                    id_aplicacion_str = row.get('id_aplicacion', '').strip()
+                    if not id_aplicacion_str:
+                        raise ValueError(
+                            "La columna 'id_aplicacion' es obligatoria y no puede estar vacía.")
+                    try:
+                        id_aplicacion_pk = int(id_aplicacion_str)
+                    except ValueError:
+                        raise ValueError(
+                            f"El 'id_aplicacion' ('{id_aplicacion_str}') no es un número válido.")
 
-                    criticidad_csv = row[4].strip().lower()
-                    estado_csv = row[5].strip().lower()
-                    bloque_csv = row[3].strip().lower()
+                    # 2. Extraer los demás campos usando los nombres de las cabeceras
+                    cod_aplicacion = row.get('id_modulo', '').strip()
+                    nombre_aplicacion = row.get('nombre_app', '').strip()
+                    desc_aplicacion = row.get('descripcion', '').strip()
 
+                    criticidad_csv = row.get('criticidad', '').strip().lower()
+                    estado_csv = row.get('estado', '').strip().lower()
+                    bloque_csv = row.get('bloque', '').strip().lower()
+
+                    # 3. Mapear y obtener objetos de clave foránea
                     criticidad_str = criticidad_map.get(
-                        criticidad_csv, row[4].strip())
-                    estado_str = estado_map.get(estado_csv, row[5].strip())
-                    bloque_str = bloque_map.get(bloque_csv, row[3].strip())
+                        criticidad_csv, row.get('criticidad', '').strip())
+                    estado_str = estado_map.get(
+                        estado_csv, row.get('estado', '').strip())
+                    bloque_str = bloque_map.get(
+                        bloque_csv, row.get('bloque', '').strip())
 
+                    # 4. Validar campos obligatorios (además del ID)
                     if not cod_aplicacion or not nombre_aplicacion:
                         raise ValueError(
-                            "El código (id_modulo) y el nombre de la aplicación (nombre_app) son obligatorios.")
+                            "Las columnas 'id_modulo' y 'nombre_app' son obligatorias.")
 
-                    # --- MODIFICACIÓN CLAVE ---
-                    # Se comprueba si el string está vacío ANTES de consultar la base de datos.
-                    # Si está vacío, el objeto será None. Si no, se busca el objeto.
+                    # 5. Obtener instancias de los modelos relacionados
                     bloque_obj = Bloque.objects.get(
                         desc_bloque__iexact=bloque_str) if bloque_str else None
                     criticidad_obj = Criticidad.objects.get(
                         desc_criticidad__iexact=criticidad_str) if criticidad_str else None
                     estado_obj = Estado.objects.get(
                         desc_estado__iexact=estado_str) if estado_str else None
-                    # --- FIN DE LA MODIFICACIÓN ---
 
+                    # 6. Usar update_or_create con el ID como clave de búsqueda
                     obj, created = Aplicacion.objects.update_or_create(
-                        cod_aplicacion=cod_aplicacion,
+                        id=id_aplicacion_pk,  # <-- Clave de búsqueda es el ID del CSV
                         defaults={
+                            'cod_aplicacion': cod_aplicacion,
                             'nombre_aplicacion': nombre_aplicacion,
                             'bloque': bloque_obj,
                             'criticidad': criticidad_obj,
@@ -204,9 +219,9 @@ def carga_masiva_view(request):
                             'desc_aplicacion': desc_aplicacion
                         }
                     )
-                    action = "creado" if created else "actualizado"
+                    action = "creado con ID fijo" if created else "actualizado"
                     logger.info(
-                        f"Registro '{cod_aplicacion}' {action} exitosamente.")
+                        f"Registro ID={id_aplicacion_pk} ('{cod_aplicacion}') {action} exitosamente.")
                     success_count += 1
 
                 except Exception as e:
@@ -215,7 +230,7 @@ def carga_masiva_view(request):
                         f"Error en la línea {line_number} del CSV. {error_message}", exc_info=True)
                     failed_rows.append({
                         'line': line_number,
-                        'row_data': ','.join(map(str, row)),
+                        'row_data': ';'.join(map(str, row.values())),
                         'error': str(e)
                     })
 
@@ -233,9 +248,9 @@ def carga_masiva_view(request):
                 request, f"Ocurrió un error general al procesar el archivo: {e}")
 
         context = {'failed_rows': failed_rows}
-        return render(request, 'gestion/carga_masiva.html', context)
+        return render(request, 'gestion/carga_masiva_aplicativo.html', context)
 
-    return render(request, 'gestion/carga_masiva.html')
+    return render(request, 'gestion/carga_masiva_aplicativo.html')
 
 
 @login_required

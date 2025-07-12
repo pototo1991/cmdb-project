@@ -93,14 +93,14 @@ class CodigoCierre(models.Model):
 
 class Incidencia(models.Model):
     # El ID automático será creado por Django.
-    # Hacemos que este campo sea único para evitar duplicados.
     incidencia = models.CharField(max_length=50, unique=True)
 
     # Campos de texto y fecha
     descripcion_incidencia = models.TextField(blank=True)
-    fecha_apertura = models.DateTimeField(
-        auto_now_add=True)  # Se establece al crear
+
+    fecha_apertura = models.DateTimeField(null=True, blank=True)
     fecha_ultima_resolucion = models.DateTimeField(null=True, blank=True)
+
     causa = models.TextField(blank=True)
     bitacora = models.TextField(blank=True)
     tec_analisis = models.TextField(blank=True)
@@ -108,9 +108,14 @@ class Incidencia(models.Model):
     solucion_final = models.TextField(blank=True)
     observaciones = models.TextField(blank=True)
     usuario_asignado = models.CharField(max_length=150, blank=True)
-    workaround = models.TextField(blank=True)
     demandas = models.TextField(blank=True)
-    grupo_asignado = models.CharField(max_length=255, blank=True)
+
+    WORKAROUND_CHOICES = [
+        ('No', 'No'),
+        ('Sí', 'Sí'),
+    ]
+    workaround = models.CharField(
+        max_length=2, choices=WORKAROUND_CHOICES, default='No')
 
     # Relaciones (ForeignKey)
     aplicacion = models.ForeignKey(
@@ -123,11 +128,11 @@ class Incidencia(models.Model):
         Severidad,
         on_delete=models.PROTECT,
         related_name='incidencias',
-        null=True,  # Permite valores nulos en la base de datos
-        blank=True  # Hace el campo opcional en los formularios
+        null=True,
+        blank=True
     )
     grupo_resolutor = models.ForeignKey(
-        GrupoResolutor, on_delete=models.SET_NULL, null=True, blank=True, related_name='incidencias'
+        GrupoResolutor, on_delete=models.SET_NULL, null=True, blank=True, related_name='incidencias_resueltas'
     )
     interfaz = models.ForeignKey(
         Interfaz, on_delete=models.SET_NULL, null=True, blank=True, related_name='incidencias'

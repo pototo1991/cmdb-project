@@ -1,0 +1,88 @@
+{% extends 'gestion/base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if codigo_cierre %}
+        Editar Código de Cierre - CMDB
+    {% else %}
+        Registrar Código de Cierre - CMDB
+    {% endif %}
+{% endblock %}
+
+{% block extra_nav_buttons %}
+    <a href="{% url 'gestion:incidencias' %}" class="navbar-link">Listado Incidencias</a>
+    <a href="{% url 'gestion:codigos_cierre' %}" class="navbar-link">Mantenedor Códigos de Cierre</a>
+    <a href="{% url 'gestion:aplicaciones' %}" class="navbar-link">Mantenedor Aplicaciones</a>
+{% endblock extra_nav_buttons %}
+
+{% block content %}
+<div class="main-content">
+    <div class="page-header">
+        <h1 class="page-title">
+            {% if codigo_cierre %}
+                Editar Código de Cierre
+            {% else %}
+                Registrar Nuevo Código de Cierre
+            {% endif %}
+        </h1>
+    </div>
+
+    <div class="table-container">
+        
+        <form method="post" action="{% if codigo_cierre %}{% url 'gestion:editar_cod_cierre' codigo_cierre.id %}{% else %}{% url 'gestion:registrar_cod_cierre' %}{% endif %}">
+            {% csrf_token %}
+
+            <div class="simple-form-layout">
+
+                <div class="form-group">
+                    <label for="aplicacion">(*) Aplicación Involucrada</label>
+                    <select id="aplicacion" name="aplicacion" required>
+                        <option value="">-- Seleccione aplicación --</option>
+                        
+                        {# Este bucle necesitará que le pases 'todas_las_aplicaciones' desde tu vista #}
+                        {% for app in todas_las_aplicaciones %}
+                            <option value="{{ app.id }}" {% if codigo_cierre.aplicacion.id == app.id %}selected{% endif %}>{{ app.nombre_aplicacion }} ({{ app.cod_aplicacion }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="cod_cierre">(*) Código de Cierre</label>
+                    <input type="text" id="cod_cierre" name="cod_cierre" value="{{ codigo_cierre.cod_cierre|default:'' }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="desc_cod_cierre">(*) Descripción Código Cierre</label>
+                    <textarea id="desc_cod_cierre" name="desc_cod_cierre" rows="3" required>{{ codigo_cierre.desc_cod_cierre|default:'' }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="causa_cierre">(*) Causa Cierre</label>
+                    <textarea id="causa_cierre" name="causa_cierre" rows="3" required>{{ codigo_cierre.causa_cierre|default:'' }}</textarea>
+                </div>
+
+            </div>
+
+            <div class="form-actions" style="justify-content: center; margin-top: 20px;">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+                {% if not codigo_cierre %}
+                <a href="{% url 'gestion:carga_masiva_cod_cierre' %}" class="btn btn-secondary">Carga Masiva</a>
+                {% endif %}
+                <a href="{% url 'gestion:codigos_cierre' %}" class="btn btn-secondary">Cancelar</a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<style>
+    .simple-form-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 15px; /* Espacio entre cada campo del formulario */
+        max-width: 600px; /* Ancho máximo del formulario */
+        margin: 0 auto; /* Centra el formulario */
+    }
+</style>
+
+{% endblock content %}
