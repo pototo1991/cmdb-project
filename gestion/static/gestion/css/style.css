@@ -566,15 +566,30 @@ body {
 
 .table-container {
     display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: flex-start;
+    flex-direction: column;
+    /* Cambiado a columna para centrar el contenido verticalmente */
+    align-items: center;
+    /* Centra el contenido horizontalmente */
+    /* flex-wrap: wrap; */
+    /* Podemos quitar esto si ya estamos en columna */
+    /* justify-content: space-between; */
+    /* Se puede quitar si estamos centrando */
+    /* align-items: flex-start; */
+    /* Esto también se puede quitar */
     background-color: #2c2f33;
     /* Un poco más claro que el fondo para destacar */
     padding: 20px;
     border-radius: 8px;
-    border: 1px solid #c3073f;
+    border: 1px solid var(--color-purpura);
+    /* Usando la variable de color para consistencia */
+    width: 80%;
+    /* Puedes ajustar este porcentaje según qué tan grande lo quieras */
+    max-width: 1000px;
+    /* Aumenta este valor para permitir que el recuadro sea más ancho */
+    margin-top: 20px;
+    /* Agregamos un poco de margen superior para separarlo del título */
+    box-sizing: border-box;
+    /* Asegura que padding y border se incluyan en el ancho/alto */
 }
 
 
@@ -721,13 +736,25 @@ body {
 
 .registration-form-layout {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, 1.5fr);
     /* Tres columnas de igual tamaño */
     gap: 30px;
     /* Espacio uniforme entre bloques */
     width: 100%;
-    max-width: 1400px;
+    max-width: none;
     /* Aumentamos el ancho para que quepan 3 columnas */
+}
+
+.form-left-column,
+.form-right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    /* Espacio entre los grupos de campos */
+    /* Eliminamos los bordes y padding que tenías aquí si los tenías */
+    border: none;
+    padding: 0;
+    background-color: transparent;
 }
 
 
@@ -886,4 +913,85 @@ body {
     margin-top: 30px;
     padding-top: 20px;
     border-top: 1px solid var(--color-purpura);
+}
+
+
+/* --- ================================== --- */
+
+
+/* ---        ESTILOS RESPONSIVOS       --- */
+
+
+/* --- ================================== --- */
+
+
+/* Para pantallas de hasta 1200px (tablets en horizontal y portátiles pequeños) */
+
+@media (max-width: 1200px) {
+    .registration-form-layout {
+        grid-template-columns: repeat(2, 1fr);
+        /* Pasa de 3 a 2 columnas */
+        max-width: 95%;
+        width: 100%;
+    }
+    .page-container {
+        width: 100%;
+        padding: 15px;
+        box-sizing: border-box;
+    }
+}
+
+
+/* Para pantallas de hasta 768px (tablets en vertical y móviles) */
+
+@media (max-width: 768px) {
+    /* --- Navbar --- */
+    .navbar {
+        flex-direction: column;
+        /* Apila el logo y los links */
+        align-items: flex-start;
+        /* Alinea todo a la izquierda */
+        padding: 15px;
+    }
+    .navbar-links {
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+        margin-top: 15px;
+        gap: 10px;
+    }
+    .navbar-logout,
+    .navbar-link {
+        width: 100%;
+        text-align: center;
+        box-sizing: border-box;
+    }
+    /* --- Contenido Principal y Formularios --- */
+    .main-content {
+        padding: 20px;
+        /* Reduce el padding en pantallas pequeñas */
+    }
+    .registration-form-layout {
+        grid-template-columns: 1fr;
+        /* Pasa a 1 sola columna */
+    }
+    .action-buttons,
+    .action-buttons-container,
+    .form-actions {
+        flex-direction: column;
+        /* Apila los botones de acción */
+        width: 100%;
+        gap: 15px;
+    }
+    /* --- Tablas --- */
+    .table-container {
+        overflow-x: auto;
+        /* Añade scroll horizontal a las tablas */
+        padding: 10px;
+    }
+    /* --- Login --- */
+    .login-box {
+        padding: 20px;
+        width: 90%;
+    }
 }
