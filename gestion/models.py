@@ -107,7 +107,8 @@ class Incidencia(models.Model):
     correccion = models.TextField(blank=True)
     solucion_final = models.TextField(blank=True)
     observaciones = models.TextField(blank=True)
-    usuario_asignado = models.CharField(max_length=150, blank=True)
+    # usuario_asignado = models.CharField(max_length=150, blank=True)  # Campo eliminado
+
     demandas = models.TextField(blank=True)
 
     WORKAROUND_CHOICES = [
@@ -149,6 +150,9 @@ class Incidencia(models.Model):
     codigo_cierre = models.ForeignKey(
         CodigoCierre, on_delete=models.SET_NULL, null=True, blank=True, related_name='incidencias'
     )
+    usuario_asignado = models.ForeignKey(
+        'Usuario', on_delete=models.SET_NULL, null=True, blank=True, related_name='incidencias_asignadas'
+    )
 
     def __str__(self):
         return self.incidencia
@@ -157,3 +161,13 @@ class Incidencia(models.Model):
         verbose_name = "Incidencia"
         verbose_name_plural = "Incidencias"
         ordering = ['-fecha_apertura']
+
+
+class Usuario(models.Model):
+    # Django añade automáticamente un campo 'id' que es una clave primaria auto-incremental.
+    # El nombre de la tabla en la base de datos será 'gestion_usuario' por defecto.
+    usuario = models.CharField(max_length=150, unique=True)
+    nombre = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.usuario

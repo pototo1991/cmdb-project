@@ -10,7 +10,8 @@ from .models import (
     Aplicacion,
     CodigoCierre,
     Incidencia,
-    Severidad,  # 1. Importamos el nuevo modelo Severidad
+    Severidad,
+    Usuario,
 )
 
 # Registros simples para los modelos de catálogo
@@ -23,6 +24,7 @@ admin.site.register(Estado)
 admin.site.register(Interfaz)
 # 2. Registramos Severidad para que aparezca en el admin
 admin.site.register(Severidad)
+admin.site.register(Usuario)
 
 # Registros personalizados para una mejor experiencia en el admin
 

@@ -40,5 +40,10 @@ urlpatterns = [
          name='registrar_incidencia'),
     path('ajax/get-codigos-cierre/<int:aplicacion_id>/',
          views.get_codigos_cierre_por_aplicacion, name='get_codigos_cierre_por_aplicacion'),
+    path('incidencias/editar/<int:pk>/',
+         views.editar_incidencia_view, name='editar_incidencia'),
+    path('incidencias/eliminar/<int:pk>/',
+         views.eliminar_incidencia_view, name='eliminar_incidencia'),
+
 
 ]
