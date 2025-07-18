@@ -3,6 +3,8 @@
 
 {% block title %}Carga Masiva de Aplicaciones - CMDB{% endblock %}
 
+{% block extra_css %}<link rel="stylesheet" href="{% static 'gestion/css/carga_masiva.css' %}">{% endblock %}
+
 {% block extra_nav_buttons %}
     {# Puedes mantener los mismos botones de navegación si quieres #}
     <a href="{% url 'gestion:incidencias' %}" class="navbar-link">Listado Incidencias</a>

@@ -1,0 +1,122 @@
+/* --- ================================== --- */
+
+
+/* ---    CSS PARA GESTIÓN DE INCIDENCIAS   --- */
+
+
+/* --- ================================== --- */
+
+
+/* Contenedor general de la página */
+
+.page-container {
+    width: 95%;
+    max-width: 1600px;
+    /* Ancho amplio para páginas con tablas y filtros */
+    margin: 20px auto;
+    padding: 10px;
+}
+
+
+/* Estilos del contenedor de filtros */
+
+.filter-box {
+    background-color: var(--color-morado);
+    border: 1px solid var(--color-purpura);
+    border-radius: 8px;
+    padding: 20px 25px;
+    margin-bottom: 25px;
+}
+
+.filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    /* Para indicar que se puede hacer clic */
+}
+
+.filter-header h3 {
+    margin: 0;
+    color: var(--color-blanco);
+    font-weight: 400;
+}
+
+.btn-secondary {
+    background-color: transparent;
+    border: 1px solid var(--color-gris-ceramica);
+    color: var(--color-gris-ceramica);
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background-color: var(--color-purpura);
+    color: var(--color-blanco);
+    border-color: var(--color-purpura);
+}
+
+#filter-container {
+    padding-top: 20px;
+    margin-top: 20px;
+    border-top: 1px solid var(--color-purpura);
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.filter-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.9em;
+    color: var(--color-texto-secundario);
+}
+
+.filter-group input[type="text"],
+.filter-group input[type="date"],
+.filter-group select {
+    width: 100%;
+    background-color: var(--color-morado-oscuro);
+    color: var(--color-blanco);
+    border: 1px solid var(--color-texto-secundario);
+    border-radius: 4px;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.filter-group input:focus,
+.filter-group select:focus {
+    outline: none;
+    border-color: var(--color-purpura);
+}
+
+.btn.filter-btn {
+    margin-top: 20px;
+    background-color: var(--color-purpura);
+    color: var(--color-blanco);
+    padding: 10px 30px;
+}
+
+
+/* Contenedor de botones de acción (Registrar, Carga Masiva, etc.) */
+
+.action-buttons-container {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    /* Para que se adapte en pantallas pequeñas */
+}
+
+.btn-report {
+    background-color: var(--color-reporte, #1a6a35);
+}
+
+.btn-report:hover {
+    background-color: var(--color-reporte-hover, #2a8c4d);
+}

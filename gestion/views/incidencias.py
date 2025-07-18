@@ -2,8 +2,10 @@
 
 from datetime import datetime
 from django.shortcuts import render, redirect
+from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db.models import F
 from .utils import no_cache, logger
 from ..models import Aplicacion, Estado, Severidad, Impacto, GrupoResolutor, Interfaz, Cluster, Bloque, Incidencia, CodigoCierre
 
@@ -44,7 +46,7 @@ def registrar_incidencia_view(request):
             'interfaces': Interfaz.objects.all(),
             'clusters': Cluster.objects.all(),
             'bloques': Bloque.objects.all(),
-            'codigos_cierre': CodigoCierre.objects.all(),
+            # 'codigos_cierre': CodigoCierre.objects.all(),
         }
 
     # --- PROCESAMIENTO DEL FORMULARIO (MÉTODO POST) ---
@@ -137,3 +139,23 @@ def registrar_incidencia_view(request):
                 request, 'Ocurrió un error al cargar la página de registro.')
             # Redirigir a un lugar seguro en caso de error
             return redirect('gestion:dashboard')
+
+
+def get_codigos_cierre_por_aplicacion(request, aplicacion_id):
+    """
+    Vista que, dado un ID de aplicación, devuelve los códigos de cierre 
+    asociados en formato JSON.
+    """
+    try:
+        # Usamos .annotate() para crear alias que coincidan con lo que el JavaScript espera ('codigo' y 'descripcion')
+        codigos = CodigoCierre.objects.filter(aplicacion_id=aplicacion_id).annotate(
+            codigo=F('cod_cierre'),
+            descripcion=F('desc_cod_cierre')
+        ).order_by('codigo').values('id', 'codigo', 'descripcion')
+
+        return JsonResponse(list(codigos), safe=False)
+
+    except Exception as e:
+        logger.error(
+            f"Error en get_codigos_cierre_por_aplicacion: {e}", exc_info=True)
+        return JsonResponse({'error': 'Ocurrió un error en el servidor.'}, status=500)

@@ -120,6 +120,10 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+STATICFILES_DIRS = [
+    BASE_DIR / 'gestion' / 'static',
+]
+
 # Directorio donde se recolectarán los archivos estáticos para producción.
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 

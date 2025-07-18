@@ -3,6 +3,8 @@
 
 {% block title %}Registrar Incidencia{% endblock %}
 
+{% block extra_css %}<link rel="stylesheet" href="{% static 'gestion/css/registrar_incidencia.css' %}">{% endblock %}
+
 {% block extra_nav_buttons %}
     <a href="{% url 'gestion:incidencias' %}" class="navbar-link">Listado Incidencias</a>
     <a href="{% url 'gestion:codigos_cierre' %}" class="navbar-link">Mantenedor Códigos de Cierre</a>
@@ -65,6 +67,7 @@
             </div>
         </div>
 
+
         <div class="form-column">
             <div class="form-block">
                 <h3 class="form-block-title">Clasificación</h3>
@@ -72,42 +75,28 @@
                     <label for="estado">Estado (*)</label>
                     <select id="estado" name="estado" required>
                         <option value="" disabled selected>Seleccione un estado...</option>
-                        
-                        {% for est in estados %}
-                            <option value="{{ est.id }}">{{ est.desc_estado }}</option>
-                        {% endfor %}
+                        {% for est in estados %}<option value="{{ est.id }}">{{ est.desc_estado }}</option>{% endfor %}
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="impacto">Impacto (*)</label>
                     <select id="impacto" name="impacto" required>
                         <option value="" disabled selected>Seleccione un impacto...</option>
-                        
-                        {% for imp in impactos %}
-                            <option value="{{ imp.id }}">{{ imp.desc_impacto }}</option>
-                        {% endfor %}
+                        {% for imp in impactos %}<option value="{{ imp.id }}">{{ imp.desc_impacto }}</option>{% endfor %}
                     </select>
                 </div>
-
                 <div class="form-group">
                     <label for="severidad">Severidad</label>
                     <select id="severidad" name="severidad">
                         <option value="" disabled selected>Seleccione severidad...</option>
-                        
-                        {% for sev in severidades %}
-                            <option value="{{ sev.id }}">{{ sev.desc_severidad }}</option>
-                        {% endfor %}
+                        {% for sev in severidades %}<option value="{{ sev.id }}">{{ sev.desc_severidad }}</option>{% endfor %}
                     </select>
                 </div>
-
                 <div class="form-group">
                     <label for="bloque">Bloque (*)</label>
                     <select id="bloque" name="bloque" required>
                         <option value="" disabled selected>Seleccione un bloque...</option>
-
-                        {% for blq in bloques %}
-                            <option value="{{ blq.id }}">{{ blq.desc_bloque }}</option>
-                        {% endfor %}
+                        {% for blq in bloques %}<option value="{{ blq.id }}">{{ blq.desc_bloque }}</option>{% endfor %}
                     </select>
                 </div>
             </div>
@@ -124,7 +113,9 @@
                 </div>
                 <div class="form-group">
                     <label for="codigo_cierre">Código de Cierre</label>
-                    <select id="codigo_cierre" name="codigo_cierre"><option value="">Seleccione un código...</option>{% for cod in codigos_cierre %}<option value="{{ cod.id }}">{{ cod.cod_cierre }}</option>{% endfor %}</select>
+                    <select id="codigo_cierre" name="codigo_cierre">
+                        <option value="">Seleccione una aplicación primero...</option>
+                    </select>
                 </div>
             </div>
         </div>
@@ -141,7 +132,7 @@
                     <input type="datetime-local" id="fecha_ultima_resolucion" name="fecha_ultima_resolucion">
                 </div>
                 <div class="form-group">
-                    <label for="usuario_asignado">Usuario Asignado</label>
+                    <label for="usuario_asignado">Usuario Resolutor</label>
                     <input type="text" id="usuario_asignado" name="usuario_asignado">
                 </div>
                 <div class="form-group">
@@ -149,7 +140,6 @@
                     <select id="grupo_resolutor" name="grupo_resolutor"><option value="">Seleccione un grupo...</option>{% for grupo in grupos_resolutores %}<option value="{{ grupo.id }}">{{ grupo.desc_grupo_resol }}</option>{% endfor %}</select>
                 </div>
             </div>
-
             <div class="form-block">
                 <h3 class="form-block-title">Bitácora y Notas</h3>
                 <div class="form-group">
@@ -174,7 +164,6 @@
             </div>
         </div>
 
-
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Registrar Incidencia</button>
             <a href="#" class="btn btn-secondary">Carga Masiva Inicial</a>
@@ -183,3 +172,77 @@
     </form>
 </div>
 {% endblock %}
+
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // MENSAJE 1: Nos confirma que el script se inició después de cargar la página.
+    console.log("Script iniciado. DOM cargado.");
+
+    const aplicacionSelect = document.getElementById('aplicacion');
+    const codigoCierreSelect = document.getElementById('codigo_cierre');
+
+    // MENSAJE 2: Verificamos si encontramos el campo de aplicación.
+    if (aplicacionSelect) {
+        console.log("Elemento 'aplicacion' encontrado.", aplicacionSelect);
+    } else {
+        console.error("¡ERROR! No se encontró el elemento con ID 'aplicacion'.");
+        return; // Detenemos el script si no lo encontramos.
+    }
+
+    // MENSAJE 3: Verificamos si encontramos el campo de código de cierre.
+    if (codigoCierreSelect) {
+        console.log("Elemento 'codigo_cierre' encontrado.", codigoCierreSelect);
+    } else {
+        console.error("¡ERROR! No se encontró el elemento con ID 'codigo_cierre'.");
+        return;
+    }
+
+    // MENSAJE 4: Añadimos el "oyente" del evento.
+    console.log("Añadiendo el 'listener' al campo de aplicación.");
+    aplicacionSelect.addEventListener('change', function() {
+        // MENSAJE 5: Este mensaje SOLO debe aparecer CUANDO seleccionas una aplicación.
+        console.log("¡Evento 'change' detectado en Aplicación!");
+        
+        const aplicacionId = this.value;
+        console.log("ID de aplicación seleccionado:", aplicacionId);
+
+        codigoCierreSelect.innerHTML = '<option value="">Cargando...</option>';
+
+        if (!aplicacionId) {
+            codigoCierreSelect.innerHTML = '<option value="">Seleccione una aplicación primero...</option>';
+            return;
+        }
+
+        const url = `{% url 'gestion:get_codigos_cierre_por_aplicacion' 0 %}`.replace('0', aplicacionId);
+        console.log("Llamando a la URL:", url);
+
+        fetch(url)
+            .then(response => {
+                console.log("Respuesta recibida del servidor:", response);
+                if (!response.ok) {
+                    throw new Error(`Error de red: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Datos (JSON) recibidos:", data);
+                codigoCierreSelect.innerHTML = '<option value="">Seleccione un código...</option>';
+                
+                data.forEach(function(codigo) {
+                    const option = document.createElement('option');
+                    option.value = codigo.id;
+                    option.textContent = `${codigo.codigo} - ${codigo.descripcion}`;
+                    codigoCierreSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error durante la operación fetch:', error);
+                codigoCierreSelect.innerHTML = '<option value="">Error al cargar datos</option>';
+            });
+    });
+
+});
+</script>
+{% endblock extra_scripts %}

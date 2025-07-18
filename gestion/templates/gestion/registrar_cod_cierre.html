@@ -9,6 +9,8 @@
     {% endif %}
 {% endblock %}
 
+{% block extra_css %}<link rel="stylesheet" href="{% static 'gestion/css/registrar_cod_cierre.css' %}">{% endblock %}
+
 {% block extra_nav_buttons %}
     <a href="{% url 'gestion:incidencias' %}" class="navbar-link">Listado Incidencias</a>
     <a href="{% url 'gestion:codigos_cierre' %}" class="navbar-link">Mantenedor Códigos de Cierre</a>
@@ -74,15 +76,4 @@
         </form>
     </div>
 </div>
-
-<style>
-    .simple-form-layout {
-        display: flex;
-        flex-direction: column;
-        gap: 15px; /* Espacio entre cada campo del formulario */
-        max-width: 600px; /* Ancho máximo del formulario */
-        margin: 0 auto; /* Centra el formulario */
-    }
-</style>
-
 {% endblock content %}

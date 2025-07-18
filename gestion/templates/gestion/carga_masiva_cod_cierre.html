@@ -3,6 +3,8 @@
 
 {% block title %}Carga Masiva de Códigos de Cierre - CMDB{% endblock %}
 
+{% block extra_css %}<link rel="stylesheet" href="{% static 'gestion/css/carga_masiva.css' %}">{% endblock %}
+
 {% block extra_nav_buttons %}
     <a href="{% url 'gestion:incidencias' %}" class="navbar-link">Listado Incidencias</a>
     <a href="{% url 'gestion:codigos_cierre' %}" class="navbar-link">Mantenedor Códigos de Cierre</a>

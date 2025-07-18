@@ -1,6 +1,9 @@
 {% extends 'gestion/base.html' %}
+{% load static %}
 
 {% block title %}Dashboard - CMDB{% endblock %}
+
+{% block extra_css %}<link rel="stylesheet" href="{% static 'gestion/css/dashboard.css' %}">{% endblock %}
 
 {% block content %}
     <div class="main-content">

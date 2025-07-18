@@ -1,7 +1,9 @@
 {% extends 'gestion/base.html' %}
 {% load static %}
 
-{% block title %}Listado de Aplicaciones - CMDB{% endblock %}
+{% block title %}Mantenedor de Aplicaciones - CMDB{% endblock %}
+
+{% block extra_css %}<link rel="stylesheet" href="{% static 'gestion/css/listado_tablas.css' %}">{% endblock %}
 
 {% block extra_nav_buttons %}
     <a href="{% url 'gestion:incidencias' %}" class="navbar-link">Listado Incidencias</a>
@@ -23,7 +25,7 @@
                     <th>Eliminar</th>
                     <th>Editar</th>
                     <th>Código</th>
-                    <th>Nombre Aplicación</th>
+                    <th>Nombre</th>
                     <th>Bloque</th>
                     <th>Criticidad</th>
                     <th>Estado</th>
@@ -31,10 +33,10 @@
                 </tr>
             </thead>
             <tbody>
-                {% for aplicacion in lista_de_aplicaciones %}
+                {% for app in lista_de_aplicaciones %}
                 <tr>
                     <td class="text-center">
-                        <form action="{% url 'gestion:eliminar_aplicacion' aplicacion.id %}" method="post" onsubmit="return confirm('¿Estás seguro de que deseas eliminar esta aplicación?');" style="display: inline;">
+                        <form action="{% url 'gestion:eliminar_aplicacion' app.id %}" method="post" onsubmit="return confirm('¿Estás seguro de que deseas eliminar esta aplicación?');" style="display: inline;">
                             {% csrf_token %}
                             <button type="submit" class="btn-icon btn-delete" title="Eliminar">
                                 <i class="fas fa-trash-alt"></i>
@@ -42,16 +44,16 @@
                         </form>
                     </td>
                     <td class="text-center">
-                        <a href="{% url 'gestion:editar_aplicacion' aplicacion.id %}" class="btn-icon btn-edit" title="Editar">
+                        <a href="{% url 'gestion:editar_aplicacion' app.id %}" class="btn-icon btn-edit" title="Editar">
                             <i class="fas fa-edit"></i>
                         </a>
                     </td>
-                    <td>{{ aplicacion.cod_aplicacion }}</td>
-                    <td>{{ aplicacion.nombre_aplicacion }}</td>
-                    <td>{{ aplicacion.bloque.desc_bloque }}</td>
-                    <td>{{ aplicacion.criticidad.desc_criticidad }}</td>
-                    <td>{{ aplicacion.estado.desc_estado }}</td>
-                    <td>{{ aplicacion.desc_aplicacion }}</td>
+                    <td>{{ app.cod_aplicacion }}</td>
+                    <td>{{ app.nombre_aplicacion }}</td>
+                    <td>{{ app.bloque.desc_bloque }}</td>
+                    <td>{{ app.criticidad.desc_criticidad }}</td>
+                    <td>{{ app.estado.desc_estado }}</td>
+                    <td>{{ app.desc_aplicacion|truncatechars:50 }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -62,59 +64,43 @@
 
 {% block extra_scripts %}
 <script>
-$(document).ready(function() {
-    // INICIO DEL CÓDIGO COMPLETO Y CORREGIDO
-    $('#tabla-aplicaciones').DataTable({
-
-        // Opción de lenguaje para textos en español
-        "language": {
-            "lengthMenu": "Mostrar _MENU_ registros por página",
-            "zeroRecords": "No se encontraron resultados",
-            "info": "Mostrando página _PAGE_ de _PAGES_",
-            "infoEmpty": "No hay registros disponibles",
-            "infoFiltered": "(filtrado de un total de _MAX_ registros)",
-            "search": "Buscar por:",
-            "paginate": {
-                "first": "Primero",
-                "last": "Último",
-                "next": "Siguiente",
-                "previous": "Anterior"
+    $(document).ready(function() {
+        $('#tabla-aplicaciones').DataTable({
+            "language": {
+                "lengthMenu": "Mostrar _MENU_ registros por página",
+                "zeroRecords": "No se encontraron resultados",
+                "info": "Mostrando página _PAGE_ de _PAGES_",
+                "infoEmpty": "No hay registros disponibles",
+                "infoFiltered": "(filtrado de un total de _MAX_ registros)",
+                "search": "Buscar:",
+                "paginate": {
+                    "first": "Primero",
+                    "last": "Último",
+                    "next": "Siguiente",
+                    "previous": "Anterior"
+                }
+            },
+            "lengthMenu": [
+                [10, 25, 50, 100, -1],
+                [10, 25, 50, 100, "Todas"]
+            ],
+            "scrollY": "60vh",
+            "scrollCollapse": true,
+            "paging": true,
+            "pageLength": 25,
+            "order": [[ 2, "asc" ]],
+            "initComplete": function(settings, json) {
+                // Quita la clase de carga para hacer la tabla visible
+                $('#tabla-codigos-cierre').removeClass('data-table-loading');
+            },
+            "drawCallback": function(settings) {
+                var totalRegistros = {{ total_registros|default:0 }};
+                var totalInfo = '<div class="total-records-info">Total de registros existentes: <strong>' + totalRegistros + '</strong></div>';
+                if ($('#tabla-aplicaciones_info .total-records-info').length === 0) {
+                    $('#tabla-aplicaciones_info').append(totalInfo);
+                }
             }
-        },
-
-        // Menú para seleccionar cuántos registros mostrar
-        "lengthMenu": [
-            [10, 25, 50, 100, -1],
-            [10, 25, 50, 100, "Todas"]
-        ],
-
-        // Activa el scroll vertical en la tabla
-        "scrollY": "60vh",
-        "scrollCollapse": true,
-
-        // Asegura que la paginación esté activa
-        "paging": true,
-
-        // Registros a mostrar por defecto al cargar
-        "pageLength": 25,
-
-        // Orden inicial de la tabla (por la columna 'Código')
-        "order": [[ 2, "asc" ]],
-
-        // Función que se ejecuta cada vez que la tabla se redibuja
-        "drawCallback": function(settings) {
-            var totalRegistros = {{ total_registros }};
-            var totalInfo = '<div class="total-records-info">Total de registros existentes: <strong>' + totalRegistros + '</strong></div>';
-
-            // Revisa si el texto ya existe antes de agregarlo para evitar duplicados
-            if ($('#tabla-aplicaciones_info .total-records-info').length === 0) {
-                $('#tabla-aplicaciones_info').append(totalInfo);
-            }
-        }
+        });
     });
-    // FIN DEL CÓDIGO COMPLETO Y CORREGIDO
-
-
-});
 </script>
 {% endblock extra_scripts %}

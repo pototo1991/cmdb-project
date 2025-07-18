@@ -3,6 +3,11 @@
 
 {% block title %}Gestión de Incidencias - CMDB{% endblock %}
 
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'gestion/css/listado_tablas.css' %}">
+    <link rel="stylesheet" href="{% static 'gestion/css/incidencia.css' %}">
+{% endblock %}
+
 {% block extra_nav_buttons %}
     <a href="{% url 'gestion:incidencias' %}" class="navbar-link">Listado Incidencias</a>
     <a href="{% url 'gestion:codigos_cierre' %}" class="navbar-link">Mantenedor Códigos de Cierre</a>
@@ -50,7 +55,7 @@
     </div>
 
     <div class="table-container">
-        <table id="tabla-incidencias" class="data-table">
+        <table id="tabla-incidencias" class="data-table data-table-loading">
             <thead>
                 <tr>
                     <th>Eliminar</th>
@@ -99,7 +104,18 @@
 $(document).ready(function() {
     $('#tabla-incidencias').DataTable({
         "language": {
-            "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json"
+            "lengthMenu": "Mostrar _MENU_ registros por página",
+            "zeroRecords": "No se encontraron resultados",
+            "info": "Mostrando página _PAGE_ de _PAGES_",
+            "infoEmpty": "No hay registros disponibles",
+            "infoFiltered": "(filtrado de un total de _MAX_ registros)",
+            "search": "Buscar:",
+            "paginate": {
+                "first": "Primero",
+                "last": "Último",
+                "next": "Siguiente",
+                "previous": "Anterior"
+            }
         },
         "lengthMenu": [
             [10, 25, 50, 100, -1],
@@ -109,7 +125,11 @@ $(document).ready(function() {
         "scrollCollapse": true,
         "paging": true,
         "pageLength": 25,
-        "order": [[ 2, "asc" ]]
+        "order": [[ 2, "asc" ]],
+        "initComplete": function(settings, json) {
+            // CORRECCIÓN: Apunta al ID correcto
+            $('#tabla-incidencias').removeClass('data-table-loading');
+        },
     });
 
     // Script para el botón de mostrar/ocultar filtros

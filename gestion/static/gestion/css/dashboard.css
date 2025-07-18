@@ -1,0 +1,60 @@
+/* --- ================================== --- */
+
+
+/* ---     CSS PARA LA PÁGINA DASHBOARD     --- */
+
+
+/* --- ================================== --- */
+
+
+/* Estilos para el contenido específico del dashboard.
+   .main-content y .btn ya están en base.css */
+
+.main-content h1 {
+    font-size: 2.5em;
+    /* Un poco más grande para destacar */
+    font-weight: 300;
+    color: var(--color-blanco);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+}
+
+.main-content p {
+    color: var(--color-texto-secundario);
+    font-size: 1.2em;
+    margin-bottom: 40px;
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    /* Aumentamos el espacio entre botones */
+    flex-wrap: wrap;
+    /* Permite que los botones se reorganicen si no caben */
+}
+
+
+/* --- ================================== --- */
+
+
+/* ---        ESTILOS RESPONSIVOS       --- */
+
+
+/* --- ================================== --- */
+
+@media (max-width: 768px) {
+    .action-buttons {
+        flex-direction: column;
+        /* Apila los botones en pantallas pequeñas */
+        width: 100%;
+        gap: 15px;
+    }
+    .main-content h1 {
+        font-size: 2em;
+    }
+    .main-content p {
+        font-size: 1em;
+    }
+}

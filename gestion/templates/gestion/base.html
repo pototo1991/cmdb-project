@@ -8,7 +8,10 @@
     
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css">
     
-    <link rel="stylesheet" href="{% static 'gestion/css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'gestion/css/base.css' %}"> 
+    
+    {% block extra_css %}{% endblock %}
+    
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>

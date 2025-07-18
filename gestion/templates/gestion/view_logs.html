@@ -1,6 +1,9 @@
 {% extends 'gestion/base.html' %}
+{% load static %}
 
 {% block title %}Visor de Logs - CMDB{% endblock %}
+
+{% block extra_css %}<link rel="stylesheet" href="{% static 'gestion/css/view_logs.css' %}">{% endblock %}
 
 {# Este bloque inyectará los botones en el navbar de base.html #}
 {% block extra_nav_buttons %}

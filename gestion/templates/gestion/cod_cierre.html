@@ -3,6 +3,8 @@
 
 {% block title %}Códigos de Cierre - CMDB{% endblock %}
 
+{% block extra_css %}<link rel="stylesheet" href="{% static 'gestion/css/listado_tablas.css' %}">{% endblock %}
+
 {% block extra_nav_buttons %}
     <a href="{% url 'gestion:incidencias' %}" class="navbar-link">Listado Incidencias</a>
     <a href="{% url 'gestion:codigos_cierre' %}" class="navbar-link">Mantenedor Códigos de Cierre</a>
@@ -18,8 +20,8 @@
     </div>
 
     <div class="table-container">
-        <table id="tabla-codigos-cierre" class="data-table">
-            <thead>
+        <table id="tabla-codigos-cierre" class="data-table data-table-loading">
+        <thead>
                 <tr>
                     <th>Eliminar</th>
                     <th>Editar</th>
@@ -60,6 +62,11 @@
 {% block extra_scripts %}
 <script>
 $(document).ready(function() {
+    // ===== INICIO DE LA CORRECCIÓN =====
+    // Ya no se añade la clase con JS. Solo se quita al final.
+    // La línea que estaba aquí se ha eliminado.
+    // ===== FIN DE LA CORRECCIÓN =====
+
     $('#tabla-codigos-cierre').DataTable({
         "language": {
             "lengthMenu": "Mostrar _MENU_ registros por página",
@@ -84,14 +91,14 @@ $(document).ready(function() {
         "paging": true,
         "pageLength": 25,
         "order": [[ 2, "asc" ]],
+        "initComplete": function(settings, json) {
+            $('#tabla-codigos-cierre').removeClass('data-table-loading');
+        },
         "drawCallback": function(settings) {
             var totalRegistros = {{ total_registros|default:0 }};
             var totalInfo = '<div class="total-records-info">Total de registros existentes: <strong>' + totalRegistros + '</strong></div>';
             if ($('#tabla-codigos-cierre_info .total-records-info').length === 0) {
-                // ===== INICIO DE LA CORRECCIÓN =====
-                // La variable estaba como 'TotalInfo' y debe ser 'totalInfo' (en minúscula).
                 $('#tabla-codigos-cierre_info').append(totalInfo);
-                // ===== FIN DE LA CORRECCIÓN =====
             }
         }
     });
