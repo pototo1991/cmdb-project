@@ -44,6 +44,8 @@ urlpatterns = [
          views.editar_incidencia_view, name='editar_incidencia'),
     path('incidencias/eliminar/<int:pk>/',
          views.eliminar_incidencia_view, name='eliminar_incidencia'),
+    path('incidencias/carga-masiva/', views.carga_masiva_incidencia_view,
+         name='carga_masiva_incidencia'),
 
 
 ]

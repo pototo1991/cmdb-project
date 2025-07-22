@@ -1,7 +1,13 @@
 {% extends 'gestion/base.html' %}
 {% load static %}
 
-{% block title %}Registrar Incidencia{% endblock %}
+{% block title %}
+    {% if incidencia %}
+        Editar Incidencia
+    {% else %}
+        Registrar Incidencia
+    {% endif %}
+{% endblock %}
 
 {% block extra_css %}<link rel="stylesheet" href="{% static 'gestion/css/registrar_incidencia.css' %}">{% endblock %}
 
@@ -13,7 +19,15 @@
 
 {% block content %}
 <div class="main-content">
-    <h1 class="page-title">Registrar Nueva Incidencia</h1>
+    <div class="page-header">
+        <h1 class="page-title">
+            {% if incidencia %}
+                Editar Incidencia
+            {% else %}
+                Registrar Nueva Incidencia
+            {% endif %}
+        </h1>
+    </div>
 
     {% if messages %}
     <ul class="messages">
@@ -23,7 +37,7 @@
     </ul>
     {% endif %}
 
-    <form method="post" action="{% url 'gestion:registrar_incidencia' %}" class="registration-form-layout" autocomplete="off">
+    <form method="post" action="{% if incidencia %}{% url 'gestion:editar_incidencia' incidencia.id %}{% else %}{% url 'gestion:registrar_incidencia' %}{% endif %}" class="registration-form-layout" autocomplete="off">
         {% csrf_token %}
 
         <div class="form-column">
@@ -31,18 +45,22 @@
                 <h3 class="form-block-title">Datos Principales</h3>
                 <div class="form-group">
                     <label for="incidencia">ID Incidencia (*)</label>
-                    <input type="text" id="incidencia" name="incidencia" required>
+                    <input type="text" id="incidencia" name="incidencia" value="{{ incidencia.id_incidencia }}" required {% if incidencia %}readonly{% endif %}>
                 </div>
                 <div class="form-group">
                     <label for="aplicacion">Aplicación (*)</label>
                     <select id="aplicacion" name="aplicacion" required>
                         <option value="">Seleccione una aplicación...</option>
-                        {% for app in aplicaciones %}<option value="{{ app.id }}">{{ app.nombre_aplicacion }}</option>{% endfor %}
+                        {% for app in aplicaciones %}
+                            <option value="{{ app.id }}" {% if app.id == incidencia.aplicacion.id %}selected{% endif %}>
+                                {{ app.nombre_aplicacion }}
+                            </option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="descripcion_incidencia">Descripción</label>
-                    <textarea id="descripcion_incidencia" name="descripcion_incidencia" rows="4"></textarea>
+                    <textarea id="descripcion_incidencia" name="descripcion_incidencia" rows="4">{{ incidencia.descripcion_incidencia }}</textarea>
                 </div>
             </div>
 
@@ -50,19 +68,19 @@
                 <h3 class="form-block-title">Análisis y Solución</h3>
                 <div class="form-group">
                     <label for="causa">Causa</label>
-                    <textarea id="causa" name="causa" rows="3"></textarea>
+                    <textarea id="causa" name="causa" rows="3">{{ incidencia.causa }}</textarea>
                 </div>
                 <div class="form-group">
                     <label for="tec_analisis">Análisis Técnico</label>
-                    <textarea id="tec_analisis" name="tec_analisis" rows="3"></textarea>
+                    <textarea id="tec_analisis" name="tec_analisis" rows="3">{{ incidencia.tec_analisis }}</textarea>
                 </div>
                 <div class="form-group">
                     <label for="correccion">Corrección</label>
-                    <textarea id="correccion" name="correccion" rows="3"></textarea>
+                    <textarea id="correccion" name="correccion" rows="3">{{ incidencia.correccion }}</textarea>
                 </div>
                 <div class="form-group">
                     <label for="solucion_final">Solución Final</label>
-                    <textarea id="solucion_final" name="solucion_final" rows="3"></textarea>
+                    <textarea id="solucion_final" name="solucion_final" rows="3">{{ incidencia.solucion_final }}</textarea>
                 </div>
             </div>
         </div>
@@ -75,28 +93,36 @@
                     <label for="estado">Estado (*)</label>
                     <select id="estado" name="estado" required>
                         <option value="" disabled selected>Seleccione un estado...</option>
-                        {% for est in estados %}<option value="{{ est.id }}">{{ est.desc_estado }}</option>{% endfor %}
+                        {% for est in estados %}
+                            <option value="{{ est.id }}" {% if est.id == incidencia.estado.id %}selected{% endif %}>{{ est.desc_estado }}</option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="impacto">Impacto (*)</label>
                     <select id="impacto" name="impacto" required>
                         <option value="" disabled selected>Seleccione un impacto...</option>
-                        {% for imp in impactos %}<option value="{{ imp.id }}">{{ imp.desc_impacto }}</option>{% endfor %}
+                        {% for imp in impactos %}
+                            <option value="{{ imp.id }}" {% if imp.id == incidencia.impacto.id %}selected{% endif %}>{{ imp.desc_impacto }}</option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="severidad">Severidad</label>
                     <select id="severidad" name="severidad">
                         <option value="" disabled selected>Seleccione severidad...</option>
-                        {% for sev in severidades %}<option value="{{ sev.id }}">{{ sev.desc_severidad }}</option>{% endfor %}
+                        {% for sev in severidades %}
+                            <option value="{{ sev.id }}" {% if sev.id == incidencia.severidad.id %}selected{% endif %}>{{ sev.desc_severidad }}</option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="bloque">Bloque (*)</label>
                     <select id="bloque" name="bloque" required>
                         <option value="" disabled selected>Seleccione un bloque...</option>
-                        {% for blq in bloques %}<option value="{{ blq.id }}">{{ blq.desc_bloque }}</option>{% endfor %}
+                        {% for blq in bloques %}
+                            <option value="{{ blq.id }}" {% if blq.id == incidencia.bloque.id %}selected{% endif %}>{{ blq.desc_bloque }}</option>
+                        {% endfor %}
                     </select>
                 </div>
             </div>
@@ -105,11 +131,11 @@
                 <h3 class="form-block-title">Detalles de Cierre</h3>
                 <div class="form-group">
                     <label for="interfaz">Interfaz</label>
-                    <select id="interfaz" name="interfaz"><option value="">Seleccione una interfaz...</option>{% for ifaz in interfaces %}<option value="{{ ifaz.id }}">{{ ifaz.desc_interfaz }}</option>{% endfor %}</select>
+                    <select id="interfaz" name="interfaz"><option value="">Seleccione una interfaz...</option>{% for ifaz in interfaces %}<option value="{{ ifaz.id }}" {% if ifaz.id == incidencia.interfaz.id %}selected{% endif %}>{{ ifaz.desc_interfaz }}</option>{% endfor %}</select>
                 </div>
                 <div class="form-group">
                     <label for="cluster">Cluster</label>
-                    <select id="cluster" name="cluster"><option value="">Seleccione un cluster...</option>{% for clu in clusters %}<option value="{{ clu.id }}">{{ clu.desc_cluster }}</option>{% endfor %}</select>
+                    <select id="cluster" name="cluster"><option value="">Seleccione un cluster...</option>{% for clu in clusters %}<option value="{{ clu.id }}" {% if clu.id == incidencia.cluster.id %}selected{% endif %}>{{ clu.desc_cluster }}</option>{% endfor %}</select>
                 </div>
                 <div class="form-group">
                     <label for="codigo_cierre">Código de Cierre</label>
@@ -125,52 +151,58 @@
                 <h3 class="form-block-title">Fechas y Asignación</h3>
                 <div class="form-group">
                     <label for="fecha_apertura">Fecha de Apertura</label>
-                    <input type="datetime-local" id="fecha_apertura" name="fecha_apertura">
+                    <input type="datetime-local" id="fecha_apertura" name="fecha_apertura" value="{{ incidencia.fecha_apertura|date:'Y-m-d\TH:i' }}">
                 </div>
                 <div class="form-group">
                     <label for="fecha_ultima_resolucion">Fecha de Resolución</label>
-                    <input type="datetime-local" id="fecha_ultima_resolucion" name="fecha_ultima_resolucion">
+                    <input type="datetime-local" id="fecha_ultima_resolucion" name="fecha_ultima_resolucion" value="{{ incidencia.fecha_ultima_resolucion|date:'Y-m-d\TH:i' }}">
                 </div>
                 <div class="form-group">
                     <label for="usuario_asignado">Usuario Resolutor</label>
                     <select id="usuario_asignado" name="usuario_asignado">
                         <option value="">Seleccione un usuario...</option>
                         {% for usuario in usuarios %}
-                            <option value="{{ usuario.id }}">{{ usuario.nombre }} ({{ usuario.usuario }})</option>
+                            <option value="{{ usuario.id }}" {% if usuario.id == incidencia.usuario_asignado.id %}selected{% endif %}>{{ usuario.nombre }} ({{ usuario.usuario }})</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="grupo_resolutor">Grupo Resolutor</label>
-                    <select id="grupo_resolutor" name="grupo_resolutor"><option value="">Seleccione un grupo...</option>{% for grupo in grupos_resolutores %}<option value="{{ grupo.id }}">{{ grupo.desc_grupo_resol }}</option>{% endfor %}</select>
+                    <select id="grupo_resolutor" name="grupo_resolutor"><option value="">Seleccione un grupo...</option>{% for grupo in grupos_resolutores %}<option value="{{ grupo.id }}" {% if grupo.id == incidencia.grupo_resolutor.id %}selected{% endif %}>{{ grupo.desc_grupo_resol }}</option>{% endfor %}</select>
                 </div>
             </div>
             <div class="form-block">
                 <h3 class="form-block-title">Bitácora y Notas</h3>
                 <div class="form-group">
                     <label for="bitacora">Bitácora</label>
-                    <textarea id="bitacora" name="bitacora" rows="3"></textarea>
+                    <textarea id="bitacora" name="bitacora" rows="3">{{ incidencia.bitacora }}</textarea>
                 </div>
                 <div class="form-group">
                     <label for="observaciones">Observaciones</label>
-                    <textarea id="observaciones" name="observaciones" rows="3"></textarea>
+                    <textarea id="observaciones" name="observaciones" rows="3">{{ incidencia.observaciones }}</textarea>
                 </div>
                 <div class="form-group">
                     <label for="demandas">Demandas</label>
-                    <textarea id="demandas" name="demandas" rows="3"></textarea>
+                    <textarea id="demandas" name="demandas" rows="3">{{ incidencia.demandas }}</textarea>
                 </div>
                 <div class="form-group">
                     <label for="workaround">Workaround Disponible</label>
                     <select id="workaround" name="workaround" class="form-control">
-                        <option value="No" selected>No</option>
-                        <option value="Sí">Sí</option>
+                        <option value="No" {% if incidencia.workaround == "No" %}selected{% endif %}>No</option>
+                        <option value="Sí" {% if incidencia.workaround == "Sí" %}selected{% endif %}>Sí</option>
                     </select>
                 </div>
             </div>
         </div>
 
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary">Registrar Incidencia</button>
+            <button type="submit" class="btn btn-primary">
+                {% if incidencia %}
+                    Actualizar Incidencia
+                {% else %}
+                    Registrar Incidencia
+                {% endif %}
+            </button>
             <a href="#" class="btn btn-secondary">Carga Masiva Inicial</a>
             <a href="{% url 'gestion:incidencias' %}" class="btn btn-secondary">Cancelar</a>
         </div>
@@ -181,6 +213,10 @@
 
 {% block extra_scripts %}
 <script>
+const ID_INCIDENCIA_ACTUAL = "{{ incidencia.id }}";
+const ID_APLICACION_SELECCIONADA = "{{ incidencia.aplicacion.id }}";
+const ID_CODIGO_CIERRE_SELECCIONADO = "{{ incidencia.codigo_cierre.id }}";
+
 document.addEventListener('DOMContentLoaded', function() {
     // MENSAJE 1: Nos confirma que el script se inició después de cargar la página.
     console.log("Script iniciado. DOM cargado.");
@@ -206,11 +242,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // MENSAJE 4: Añadimos el "oyente" del evento.
     console.log("Añadiendo el 'listener' al campo de aplicación.");
-    aplicacionSelect.addEventListener('change', function() {
+    aplicacionSelect.addEventListener('change', function() { // Se ejecuta cuando el usuario cambia la selección
         // MENSAJE 5: Este mensaje SOLO debe aparecer CUANDO seleccionas una aplicación.
         console.log("¡Evento 'change' detectado en Aplicación!");
         
-        const aplicacionId = this.value;
+        const aplicacionId = this.value; // El ID de la aplicación recién seleccionada
         console.log("ID de aplicación seleccionado:", aplicacionId);
 
         codigoCierreSelect.innerHTML = '<option value="">Cargando...</option>';
@@ -239,6 +275,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     const option = document.createElement('option');
                     option.value = codigo.id;
                     option.textContent = `${codigo.codigo} - ${codigo.descripcion}`;
+                    
+                    // Si estamos editando y este código es el que ya estaba guardado, lo pre-seleccionamos
+                    if (ID_CODIGO_CIERRE_SELECCIONADO && codigo.id == ID_CODIGO_CIERRE_SELECCIONADO) {
+                        option.selected = true;
+                    }
+
                     codigoCierreSelect.appendChild(option);
                 });
             })
@@ -248,6 +290,12 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     });
 
+    // Si estamos en modo edición y ya hay una aplicación seleccionada, disparamos el evento 'change'
+    // para cargar los códigos de cierre correspondientes al cargar la página.
+    if (ID_APLICACION_SELECCIONADA) {
+        console.log("Disparando evento 'change' manualmente para cargar códigos de cierre iniciales.");
+        aplicacionSelect.dispatchEvent(new Event('change'));
+    }
 });
 </script>
 {% endblock extra_scripts %}

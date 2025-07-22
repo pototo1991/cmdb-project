@@ -120,7 +120,11 @@ class Incidencia(models.Model):
 
     # Relaciones (ForeignKey)
     aplicacion = models.ForeignKey(
-        Aplicacion, on_delete=models.CASCADE, related_name='incidencias'
+        Aplicacion,
+        on_delete=models.CASCADE,
+        related_name='incidencias',
+        null=True,  # <-- AÑADIR ESTO
+        blank=True  # <-- Y ESTO
     )
     estado = models.ForeignKey(
         Estado, on_delete=models.PROTECT, related_name='incidencias'
@@ -145,7 +149,11 @@ class Incidencia(models.Model):
         Cluster, on_delete=models.SET_NULL, null=True, blank=True, related_name='incidencias'
     )
     bloque = models.ForeignKey(
-        Bloque, on_delete=models.PROTECT, related_name='incidencias'
+        Bloque,
+        on_delete=models.PROTECT,
+        related_name='incidencias',
+        null=True,  # <-- AÑADIR ESTO
+        blank=True  # <-- Y ESTO
     )
     codigo_cierre = models.ForeignKey(
         CodigoCierre, on_delete=models.SET_NULL, null=True, blank=True, related_name='incidencias'

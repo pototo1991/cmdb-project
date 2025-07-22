@@ -1,13 +1,18 @@
 # gestion/views/incidencias.py
 
+import csv
+import pandas as pd
 from datetime import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import F
+from django.db import transaction
 from .utils import no_cache, logger
 from ..models import Aplicacion, Estado, Severidad, Impacto, GrupoResolutor, Interfaz, Cluster, Bloque, Incidencia, CodigoCierre, Usuario
+from django.core.exceptions import ObjectDoesNotExist
+from unidecode import unidecode
 
 
 @login_required
@@ -242,3 +247,204 @@ def get_codigos_cierre_por_aplicacion(request, aplicacion_id):
         logger.error(
             f"Error en get_codigos_cierre_por_aplicacion: {e}", exc_info=True)
         return JsonResponse({'error': 'Ocurrió un error en el servidor.'}, status=500)
+
+
+def normalize_text(text):
+    """Convierte texto a minúsculas y quita acentos."""
+    if text is None:
+        return ""
+    return unidecode(str(text)).lower().strip()
+
+
+@login_required
+@no_cache
+def carga_masiva_incidencia_view(request):
+    """
+    Gestiona la carga masiva de incidencias.
+    (Versión con asignación de nuevos campos de texto y usuario).
+    """
+    try:
+        # --- Creación de Cachés de Búsqueda ---
+        aplicacion_cache = {normalize_text(
+            a.cod_aplicacion): a for a in Aplicacion.objects.all()}
+        estado_cache = {normalize_text(
+            e.desc_estado): e for e in Estado.objects.all()}
+        severidad_cache = {normalize_text(
+            s.desc_severidad): s for s in Severidad.objects.all()}
+        cluster_cache = {normalize_text(
+            c.desc_cluster): c for c in Cluster.objects.all()}
+        bloque_cache = {normalize_text(
+            b.desc_bloque): b for b in Bloque.objects.all()}
+        # CAMBIO: Se añade la caché para usuarios
+        usuario_cache = {normalize_text(
+            u.nombre): u for u in Usuario.objects.all()}
+
+        default_impacto = Impacto.objects.get(desc_impacto__iexact='interno')
+        default_interfaz = Interfaz.objects.get(desc_interfaz__iexact='WEB')
+
+    except ObjectDoesNotExist as e:
+        messages.error(
+            request, f"Error de Configuración: No se encontró un valor por defecto. Error: {e}")
+        return redirect('gestion:carga_masiva_incidencia')
+
+    if request.method == 'POST':
+        file = request.FILES.get('csv_file')
+        if not file or not (file.name.endswith('.csv') or file.name.endswith('.xlsx')):
+            messages.error(
+                request, 'Por favor, selecciona un archivo con formato .csv o .xlsx.')
+            return redirect('gestion:carga_masiva_incidencia')
+
+        failed_rows = []
+        success_count = 0
+
+        try:
+            if file.name.endswith('.csv'):
+                df = pd.read_csv(file, keep_default_na=False, dtype=str)
+            else:
+                df = pd.read_excel(file, keep_default_na=False, dtype=str)
+            df.fillna('', inplace=True)
+
+            with transaction.atomic():
+                for index, row in df.iterrows():
+                    line_number = index + 2
+                    try:
+                        incidencia_id = row['incidencia'].strip()
+                        if not incidencia_id or not incidencia_id.upper().startswith('INC'):
+                            continue
+
+                        # ... (lógica de aplicación y código de cierre sin cambios) ...
+                        aplicacion_obj = None
+                        codigo_cierre_obj = None
+                        app_val = row['aplicacion_id'].strip()
+                        cc_val = row['codigo_cierre_id'].strip()
+
+                        if app_val and cc_val:
+                            temp_app = aplicacion_cache.get(
+                                normalize_text(app_val))
+                            if temp_app:
+                                try:
+                                    temp_cc = CodigoCierre.objects.get(
+                                        cod_cierre__iexact=cc_val, aplicacion=temp_app)
+                                    aplicacion_obj = temp_app
+                                    codigo_cierre_obj = temp_cc
+                                except CodigoCierre.DoesNotExist:
+                                    aplicacion_obj = None
+                                    codigo_cierre_obj = None
+                            else:
+                                aplicacion_obj = None
+                                codigo_cierre_obj = None
+                        elif app_val and not cc_val:
+                            aplicacion_obj = aplicacion_cache.get(
+                                normalize_text(app_val))
+                        elif not app_val and cc_val:
+                            try:
+                                temp_cc = CodigoCierre.objects.get(
+                                    cod_cierre__iexact=cc_val)
+                                codigo_cierre_obj = temp_cc
+                                aplicacion_obj = temp_cc.aplicacion
+                            except (CodigoCierre.DoesNotExist, CodigoCierre.MultipleObjectsReturned):
+                                aplicacion_obj = None
+                                codigo_cierre_obj = None
+
+                        estado_obj = estado_cache.get(
+                            normalize_text(row['estado_id']))
+                        severidad_obj = severidad_cache.get(
+                            normalize_text(row['severidad_id']))
+                        cluster_obj = cluster_cache.get(
+                            normalize_text(row['cluster_id']))
+
+                        bloque_val = normalize_text(row['bloque_id'])
+                        if bloque_val == 'indra_d':
+                            continue
+                        bloque_obj = None
+                        if bloque_val == 'indra_b3':
+                            bloque_obj = bloque_cache.get('bloque 3')
+                        elif bloque_val == 'indra':
+                            bloque_obj = bloque_cache.get('bloque 4')
+
+                        impacto_obj = default_impacto
+                        interfaz_obj = default_interfaz
+                        grupo_resolutor_obj = None
+
+                        # CAMBIO: Se busca el usuario en la caché
+                        usuario_asignado_obj = usuario_cache.get(
+                            normalize_text(row['usuario_asignado_id']))
+
+                        workaround_val = 'Sí' if 'con wa' in row['workaround'].strip(
+                        ).lower() else 'No'
+
+                        Incidencia.objects.update_or_create(
+                            incidencia=incidencia_id,
+                            defaults={
+                                'descripcion_incidencia': row['descripcion_incidencia'].strip(),
+                                'fecha_apertura': datetime.strptime(row['fecha_apertura'].strip(), '%d-%m-%Y %H:%M:%S') if row['fecha_apertura'].strip() else None,
+                                'fecha_ultima_resolucion': datetime.strptime(row['fecha_ultima_resolucion'].strip(), '%d-%m-%Y %H:%M:%S') if row['fecha_ultima_resolucion'].strip() else None,
+                                # CAMBIO: Se asignan los campos de texto solicitados
+                                'causa': row['causa'].strip(),
+                                'bitacora': row['bitacora'].strip(),
+                                'tec_analisis': row['tec_analisis'].strip(),
+                                'correccion': row['correccion'].strip(),
+                                'solucion_final': row['solucion_final'].strip(),
+                                'observaciones': row['observaciones'].strip(),
+                                'demandas': row['demanadas'].strip(),
+                                'workaround': workaround_val,
+                                'aplicacion': aplicacion_obj,
+                                'estado': estado_obj,
+                                'severidad': severidad_obj,
+                                'grupo_resolutor': grupo_resolutor_obj,
+                                'interfaz': interfaz_obj,
+                                'impacto': impacto_obj,
+                                'cluster': cluster_obj,
+                                'bloque': bloque_obj,
+                                'codigo_cierre': codigo_cierre_obj,
+                                # CAMBIO: Se asigna el usuario encontrado
+                                'usuario_asignado': usuario_asignado_obj,
+                            }
+                        )
+                        success_count += 1
+
+                    except ObjectDoesNotExist as e:
+                        failed_rows.append({'line': line_number, 'row_data': ', '.join(
+                            map(str, row.values)), 'error': f"No se encontró un registro coincidente: {e}"})
+                    except Exception as e:
+                        failed_rows.append({'line': line_number, 'row_data': ', '.join(
+                            map(str, row.values)), 'error': str(e)})
+
+            # ... (logging y mensajes sin cambios) ...
+            log_summary = f"""
+            \n--------------------------------------------------
+            \nRESUMEN DE CARGA MASIVA
+            \nUsuario: {request.user}
+            \nArchivo: {file.name}
+            \n--------------------------------------------------
+            \nTotal de filas en el archivo: {len(df)}
+            \nIncidencias cargadas con éxito: {success_count}
+            \nIncidencias con errores: {len(failed_rows)}
+            \n--------------------------------------------------
+            """
+            if failed_rows:
+                log_summary += "\nDETALLE DE ERRORES:\n"
+                for item in failed_rows:
+                    incidencia_id_error = item.get(
+                        'row_data', 'N/A').split(',')[0]
+                    log_summary += f"  - Fila {item['line']} (Incidencia: {incidencia_id_error}): {item['error']}\n"
+
+            log_summary += "--------------------------------------------------"
+            logger.info(log_summary)
+
+            if success_count > 0:
+                messages.success(
+                    request, f'¡Carga completada! Se procesaron {success_count} incidencias con éxito.')
+            if failed_rows:
+                messages.warning(
+                    request, f'Se encontraron {len(failed_rows)} errores. Por favor, revisa los detalles a continuación.')
+            return render(request, 'gestion/carga_masiva_incidencia.html', {'failed_rows': failed_rows})
+
+        except Exception as e:
+            logger.error(
+                f"Error crítico al leer o procesar el archivo '{file.name}': {e}", exc_info=True)
+            messages.error(
+                request, f'Ocurrió un error al leer o procesar el archivo: {e}')
+            return redirect('gestion:carga_masiva_incidencia')
+
+    return render(request, 'gestion/carga_masiva_incidencia.html')

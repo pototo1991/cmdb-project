@@ -26,8 +26,8 @@
                     <th>Eliminar</th>
                     <th>Editar</th>
                     <th>Código de Cierre</th>
-                    <th>Descripción</th>
                     <th>Aplicación</th>
+                    <th>Descripción</th>                    
                     <th>Causa de Cierre</th>
                 </tr>
             </thead>
@@ -48,8 +48,8 @@
                         </a>
                     </td>
                     <td>{{ codigo.cod_cierre }}</td>
-                    <td>{{ codigo.desc_cod_cierre }}</td>
                     <td>{{ codigo.aplicacion.nombre_aplicacion }}</td>
+                    <td>{{ codigo.desc_cod_cierre }}</td>                    
                     <td>{{ codigo.causa_cierre }}</td>
                 </tr>
                 {% endfor %}
