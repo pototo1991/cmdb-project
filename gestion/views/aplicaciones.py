@@ -116,40 +116,22 @@ def registrar_aplicacion_view(request):
 @no_cache
 def carga_masiva_view(request):
     """
-    Gestiona la carga masiva de aplicaciones desde un archivo CSV con mapeo de datos.
+    Gestiona la carga masiva de aplicaciones desde un archivo CSV con mapeo de datos,
+    validación de duplicados y registro de resumen detallado.
     """
     if request.method == 'POST':
         logger.info(
             f"Usuario '{request.user}' ha iniciado una carga masiva de aplicaciones.")
         csv_file = request.FILES.get('csv_file')
+        context = {}
 
         if not csv_file or not csv_file.name.endswith('.csv'):
-            logger.warning(
-                f"Intento de carga masiva por '{request.user}' con un archivo no válido o ausente.")
             messages.error(
                 request, 'Por favor, seleccione un archivo CSV válido.')
             return render(request, 'gestion/carga_masiva_aplicativo.html')
 
-        criticidad_map = {
-            'alta': 'critica', 'critica': 'critica', 'crítica': 'critica', 'media': 'no critica',
-            'no critica': 'no critica', 'baja': 'sin criticidad', 'sin criticidad': 'sin criticidad',
-            'no crítica': 'no critica', 'no crítica': 'no critica',  # Añadido por el acento
-        }
-        estado_map = {
-            'dev': 'Construccion', 'construccion': 'Construccion', 'en construcción': 'Construccion', 'prod': 'Produccion',
-            'produccion': 'Produccion', 'en producción': 'Produccion', 'en revisión': 'Pendiente', 'desuso': 'Deshuso',
-            'pendiente': 'Pendiente', 'resuelto': 'Resuelto', 'cerrado': 'Cerrado',
-        }
-        bloque_map = {
-            'b1': 'BLOQUE 1', 'bloque 1': 'BLOQUE 1', 'b2': 'BLOQUE 2', 'bloque 2': 'BLOQUE 2',
-            'b3': 'BLOQUE 3', 'bloque 3': 'BLOQUE 3', 'b4': 'BLOQUE 4', 'bloque 4': 'BLOQUE 4',
-            'ninguno': 'Sin bloque', 'sin bloque': 'Sin bloque',
-        }
-
-        success_count = 0
-        failed_rows = []
-
         try:
+            # Decodificación del archivo
             try:
                 decoded_file = csv_file.read().decode('utf-8')
             except UnicodeDecodeError:
@@ -157,36 +139,82 @@ def carga_masiva_view(request):
                 decoded_file = csv_file.read().decode('latin-1')
 
             io_string = io.StringIO(decoded_file)
-            # Usar DictReader para leer por nombre de columna y especificar el delimitador
             reader = csv.DictReader(io_string, delimiter=';')
+            all_rows = list(reader)
+            total_records_in_file = len(all_rows)
 
-            for line_number, row in enumerate(reader, start=2):
+            # --- NUEVO: VALIDACIÓN DE DUPLICADOS POR CLAVE COMPUESTA ---
+            seen_keys = set()
+            duplicates_found = []
+            for line_number, row in enumerate(all_rows, start=2):
+                id_val = row.get('id_aplicacion', '').strip()
+                cod_val = row.get('id_modulo', '').strip()
+
+                if not id_val or not cod_val:
+                    continue  # No se puede validar una clave incompleta
+
+                composite_key = (id_val, cod_val)
+                if composite_key in seen_keys:
+                    duplicates_found.append({
+                        'line': line_number,
+                        'id': id_val,
+                        'cod': cod_val
+                    })
+                else:
+                    seen_keys.add(composite_key)
+
+            if duplicates_found:
+                error_msg = "El archivo contiene combinaciones de 'id_aplicacion' y 'id_modulo' duplicadas y no pudo ser procesado."
+                logger.error(
+                    f"{error_msg} Usuario: '{request.user}'. Duplicados: {duplicates_found}")
+                messages.error(request, error_msg +
+                               " Revisa los detalles a continuación.")
+                context['duplicates'] = duplicates_found
+                return render(request, 'gestion/carga_masiva_aplicativo.html', context)
+            # --- FIN DE LA VALIDACIÓN DE DUPLICADOS ---
+
+            criticidad_map = {
+                'alta': 'critica', 'critica': 'critica', 'crítica': 'critica', 'media': 'no critica',
+                'no critica': 'no critica', 'baja': 'sin criticidad', 'sin criticidad': 'sin criticidad',
+                'no crítica': 'no critica',
+            }
+            estado_map = {
+                'dev': 'Construccion', 'construccion': 'Construccion', 'en construcción': 'Construccion', 'prod': 'Produccion',
+                'produccion': 'Produccion', 'en producción': 'Produccion', 'en revisión': 'Pendiente', 'desuso': 'Deshuso',
+                'pendiente': 'Pendiente', 'resuelto': 'Resuelto', 'cerrado': 'Cerrado',
+            }
+            bloque_map = {
+                'b1': 'BLOQUE 1', 'bloque 1': 'BLOQUE 1', 'b2': 'BLOQUE 2', 'bloque 2': 'BLOQUE 2',
+                'b3': 'BLOQUE 3', 'bloque 3': 'BLOQUE 3', 'b4': 'BLOQUE 4', 'bloque 4': 'BLOQUE 4',
+                'ninguno': 'Sin bloque', 'sin bloque': 'Sin bloque',
+            }
+
+            success_count = 0
+            failed_rows = []
+
+            for line_number, row in enumerate(all_rows, start=2):
                 try:
-                    # Omitir filas donde todos los valores están vacíos
                     if not any(field.strip() for field in row.values()):
+                        total_records_in_file -= 1
                         continue
 
-                    # 1. Extraer y validar el ID de la aplicación (clave primaria)
                     id_aplicacion_str = row.get('id_aplicacion', '').strip()
                     if not id_aplicacion_str:
                         raise ValueError(
-                            "La columna 'id_aplicacion' es obligatoria y no puede estar vacía.")
-                    try:
-                        id_aplicacion_pk = int(id_aplicacion_str)
-                    except ValueError:
-                        raise ValueError(
-                            f"El 'id_aplicacion' ('{id_aplicacion_str}') no es un número válido.")
+                            "La columna 'id_aplicacion' es obligatoria.")
+                    id_aplicacion_pk = int(id_aplicacion_str)
 
-                    # 2. Extraer los demás campos usando los nombres de las cabeceras
                     cod_aplicacion = row.get('id_modulo', '').strip()
                     nombre_aplicacion = row.get('nombre_app', '').strip()
-                    desc_aplicacion = row.get('descripcion', '').strip()
+                    if not cod_aplicacion or not nombre_aplicacion:
+                        raise ValueError(
+                            "Las columnas 'id_modulo' y 'nombre_app' son obligatorias.")
 
+                    # ... (lógica de mapeo y obtención de objetos que ya tenías)
                     criticidad_csv = row.get('criticidad', '').strip().lower()
                     estado_csv = row.get('estado', '').strip().lower()
                     bloque_csv = row.get('bloque', '').strip().lower()
 
-                    # 3. Mapear y obtener objetos de clave foránea
                     criticidad_str = criticidad_map.get(
                         criticidad_csv, row.get('criticidad', '').strip())
                     estado_str = estado_map.get(
@@ -194,12 +222,6 @@ def carga_masiva_view(request):
                     bloque_str = bloque_map.get(
                         bloque_csv, row.get('bloque', '').strip())
 
-                    # 4. Validar campos obligatorios (además del ID)
-                    if not cod_aplicacion or not nombre_aplicacion:
-                        raise ValueError(
-                            "Las columnas 'id_modulo' y 'nombre_app' son obligatorias.")
-
-                    # 5. Obtener instancias de los modelos relacionados
                     bloque_obj = Bloque.objects.get(
                         desc_bloque__iexact=bloque_str) if bloque_str else None
                     criticidad_obj = Criticidad.objects.get(
@@ -207,48 +229,69 @@ def carga_masiva_view(request):
                     estado_obj = Estado.objects.get(
                         desc_estado__iexact=estado_str) if estado_str else None
 
-                    # 6. Usar update_or_create con el ID como clave de búsqueda
-                    obj, created = Aplicacion.objects.update_or_create(
-                        id=id_aplicacion_pk,  # <-- Clave de búsqueda es el ID del CSV
+                    Aplicacion.objects.update_or_create(
+                        id=id_aplicacion_pk,
                         defaults={
                             'cod_aplicacion': cod_aplicacion,
                             'nombre_aplicacion': nombre_aplicacion,
                             'bloque': bloque_obj,
                             'criticidad': criticidad_obj,
                             'estado': estado_obj,
-                            'desc_aplicacion': desc_aplicacion
+                            'desc_aplicacion': row.get('descripcion', '').strip()
                         }
                     )
-                    action = "creado con ID fijo" if created else "actualizado"
-                    logger.info(
-                        f"Registro ID={id_aplicacion_pk} ('{cod_aplicacion}') {action} exitosamente.")
                     success_count += 1
 
                 except Exception as e:
-                    error_message = f"Dato problemático: {row}. Error: {e}"
-                    logger.error(
-                        f"Error en la línea {line_number} del CSV. {error_message}", exc_info=True)
                     failed_rows.append({
                         'line': line_number,
-                        'row_data': ';'.join(map(str, row.values())),
+                        'row_data': ';'.join(row.values()),
                         'error': str(e)
                     })
 
+            # --- NUEVO: LOGGING DETALLADO Y MENSAJES A USUARIO ---
+            log_summary = f"""
+--------------------------------------------------
+RESUMEN DE CARGA MASIVA DE APLICACIONES
+Usuario: {request.user}
+Archivo: {csv_file.name}
+--------------------------------------------------
+Total de filas en el archivo: {total_records_in_file}
+Cargados/Actualizados con éxito: {success_count}
+Filas con errores: {len(failed_rows)}
+--------------------------------------------------"""
+
+            if failed_rows:
+                log_summary += "\nDETALLE DE ERRORES:\n"
+                for item in failed_rows:
+                    log_summary += f"  - Fila {item['line']}: {item['error']} (Datos: {item['row_data']})\n"
+                log_summary += "--------------------------------------------------"
+
+            logger.info(log_summary)
+
             if success_count > 0:
                 messages.success(
-                    request, f'{success_count} registros fueron procesados exitosamente.')
+                    request, f'¡Carga completada! Se procesaron {success_count} aplicaciones con éxito.')
             if failed_rows:
                 messages.warning(
-                    request, f'{len(failed_rows)} registros no pudieron ser procesados. Ver detalles abajo.')
+                    request, f'Se encontraron {len(failed_rows)} errores. Revisa los detalles en el log del sistema.')
+
+            context = {
+                'failed_rows': failed_rows,
+                'stats': {
+                    'total': total_records_in_file,
+                    'success': success_count,
+                    'failed': len(failed_rows)
+                }
+            }
+            return render(request, 'gestion/carga_masiva_aplicativo.html', context)
 
         except Exception as e:
             logger.critical(
-                f"Error CRÍTICO durante el proceso de carga masiva. Error: {e}", exc_info=True)
+                f"Error CRÍTICO en carga masiva por '{request.user}': {e}", exc_info=True)
             messages.error(
-                request, f"Ocurrió un error general al procesar el archivo: {e}")
-
-        context = {'failed_rows': failed_rows}
-        return render(request, 'gestion/carga_masiva_aplicativo.html', context)
+                request, f"Ocurrió un error general e inesperado: {e}")
+            return render(request, 'gestion/carga_masiva_aplicativo.html')
 
     return render(request, 'gestion/carga_masiva_aplicativo.html')
 

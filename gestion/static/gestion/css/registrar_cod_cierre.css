@@ -116,3 +116,100 @@
     color: var(--color-blanco);
     border-color: var(--color-purpura);
 }
+
+
+/* --- ESTILOS PARA LA SECCIÓN 'ÚLTIMOS CÓDIGOS' --- */
+
+
+/* Contenedor principal de la sección */
+
+#ultimos-codigos-container {
+    background-color: rgba(0, 0, 0, 0.2);
+    /* Fondo oscuro semitransparente */
+    border: 1px solid #ff0054;
+    /* Borde rosa neón, como el botón Guardar */
+    border-radius: 8px;
+    padding: 20px 25px;
+    margin-top: 40px;
+    /* Más separación del formulario */
+}
+
+
+/* Título de la sección "Últimos 5 Códigos..." */
+
+#ultimos-codigos-container h3 {
+    color: #f0f0f0;
+    /* Un blanco no tan intenso */
+    font-weight: 500;
+    text-align: left;
+    margin-top: 0;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    /* Línea separadora sutil */
+    padding-bottom: 10px;
+}
+
+
+/* Lista que contendrá los items */
+
+#lista-ultimos-codigos {
+    list-style-type: none;
+    /* Quitamos los puntos de la lista */
+    padding-left: 0;
+    margin: 0;
+}
+
+
+/* Cada fila (<li>) de la lista */
+
+#lista-ultimos-codigos li {
+    display: grid;
+    /* Usamos Grid para crear las columnas */
+    grid-template-columns: 150px 1fr;
+    /* Columna 1 (código) fija, Columna 2 (desc) flexible */
+    gap: 20px;
+    /* Espacio entre las columnas */
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    /* Separador entre filas */
+    align-items: center;
+    /* Centra verticalmente el contenido */
+}
+
+
+/* Quitamos el borde de la última fila para un acabado limpio */
+
+#lista-ultimos-codigos li:last-child {
+    border-bottom: none;
+}
+
+
+/* Estilo para el CÓDIGO (anr_s0001, etc.) */
+
+.codigo-item-code {
+    font-weight: 700;
+    /* Negrita */
+    color: #ff0054;
+    /* Color rosa neón para que destaque */
+    font-family: 'Courier New', Courier, monospace;
+    /* Fuente de tipo código */
+}
+
+
+/* Estilo para la DESCRIPCIÓN */
+
+.codigo-item-desc {
+    color: #dcdcdc;
+    /* Un gris claro para la descripción */
+    font-size: 0.9em;
+}
+
+
+/* Mensaje de "No se encontraron códigos..." o "Error..." */
+
+#lista-ultimos-codigos .mensaje-info {
+    color: #aaa;
+    font-style: italic;
+    padding: 15px;
+    text-align: center;
+}

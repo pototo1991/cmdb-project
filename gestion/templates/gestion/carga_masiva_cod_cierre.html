@@ -21,9 +21,8 @@
         <p>
             Seleccione un archivo CSV para cargar los códigos de cierre en el sistema.
             El archivo debe tener las siguientes columnas en este orden:
-            {# Se actualiza el formato del CSV según tu requerimiento #}
-            <code>idCodCierre, cod_cierre, descripcion_cierre, causa_cierre, id_aplicacion</code>.
         </p>
+        <p><code>idCodCierre, cod_cierre, descripcion_cierre, causa_cierre, id_aplicacion</code></p>
         <p>La primera fila (cabecera) será ignorada durante el proceso de carga.</p>
 
         <form method="post" enctype="multipart/form-data">
@@ -35,12 +34,36 @@
 
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">Cargar Archivo</button>
-                {# El botón ahora vuelve al listado de códigos de cierre #}
                 <a href="{% url 'gestion:codigos_cierre' %}" class="btn btn-secondary">Volver al Listado</a>
             </div>
         </form>
 
-        {# La sección para mostrar errores se mantiene igual, es genérica #}
+        {# NUEVO: Sección para mostrar duplicados encontrados en el archivo #}
+        {% if duplicates %}
+            <hr>
+            <h3 style="color: #dc3545;">Combinaciones Duplicadas Encontradas</h3>
+            <p>El archivo no pudo ser procesado. Se encontraron las siguientes combinaciones de 'idCodCierre' y 'cod_cierre' repetidas. Por favor, corríjalas y vuelva a intentarlo.</p>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Línea</th>
+                        <th>ID Duplicado</th>
+                        <th>Código Duplicado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dup in duplicates %}
+                        <tr>
+                            <td>{{ dup.line }}</td>
+                            <td>{{ dup.id }}</td>
+                            <td>{{ dup.cod }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+
+        {# La sección para mostrar errores de procesamiento se mantiene #}
         {% if failed_rows %}
             <hr>
             <h3 style="color: #dc3545;">Registros con Errores ({{ failed_rows|length }})</h3>

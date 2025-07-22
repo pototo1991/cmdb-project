@@ -34,6 +34,8 @@ urlpatterns = [
          views.editar_cod_cierre_view, name='editar_cod_cierre'),
     path('codigos-cierre/cargar/', views.carga_masiva_cod_cierre_view,
          name='carga_masiva_cod_cierre'),
+    path('ajax/get-ultimos-codigos-cierre/<int:aplicacion_id>/',
+         views.obtener_ultimos_codigos_cierre, name='get_ultimos_codigos_cierre'),
 
     path('incidencias/', views.incidencias_view, name='incidencias'),
     path('incidencias/registrar/', views.registrar_incidencia_view,

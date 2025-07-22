@@ -5,5 +5,5 @@ from .incidencias import incidencias_view, registrar_incidencia_view, editar_inc
 from .aplicaciones import (aplicaciones_view, registrar_aplicacion_view,
                            eliminar_aplicacion_view, editar_aplicacion_view, carga_masiva_view, )
 from .cod_cierre import (
-    codigos_cierre_view, registrar_cod_cierre_view, eliminar_cod_cierre_view, editar_cod_cierre_view, carga_masiva_cod_cierre_view, )
+    codigos_cierre_view, registrar_cod_cierre_view, eliminar_cod_cierre_view, editar_cod_cierre_view, carga_masiva_cod_cierre_view, obtener_ultimos_codigos_cierre, )
 from .logs import view_logs, download_log_file

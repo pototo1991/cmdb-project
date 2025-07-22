@@ -21,9 +21,9 @@
     <div class="table-container">
         <p>
             Seleccione un archivo CSV para cargar aplicaciones en el sistema.
-            El archivo debe tener las siguientes columnas en este orden:
-            <code>id_aplicacion, id_modulo, nombre_app, bloque, criticidad, estado, descripcion</code>.
+            El archivo debe tener las siguientes columnas en este orden:            
         </p>
+        <p><code>id_aplicacion; id_modulo; nombre_app; bloque; criticidad; estado; descripcion</code></p>
         <p>La primera fila (cabecera) será ignorada.</p>
 
         <form method="post" enctype="multipart/form-data">
@@ -38,6 +38,31 @@
                 <a href="{% url 'gestion:aplicaciones' %}" class="btn btn-secondary">Volver al Listado</a>
             </div>
         </form>
+
+        {# NUEVO: Sección para mostrar duplicados encontrados en el archivo #}
+        {% if duplicates %}
+            <hr>
+            <h3 style="color: #dc3545;">Combinaciones Duplicadas Encontradas</h3>
+            <p>El archivo no pudo ser procesado. Se encontraron las siguientes combinaciones de 'id_aplicacion' y 'id_modulo' repetidas. Por favor, corríjalas y vuelva a intentarlo.</p>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Línea</th>
+                        <th>ID Aplicación Duplicado</th>
+                        <th>ID Módulo Duplicado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dup in duplicates %}
+                        <tr>
+                            <td>{{ dup.line }}</td>
+                            <td>{{ dup.id }}</td>
+                            <td>{{ dup.cod }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
 
         {# Sección para mostrar los resultados después de la carga #}
         {% if failed_rows %}

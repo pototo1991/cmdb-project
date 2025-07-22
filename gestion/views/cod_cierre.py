@@ -2,6 +2,7 @@
 
 import csv
 import io
+from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -160,31 +161,28 @@ def editar_cod_cierre_view(request, pk):
         return render(request, 'gestion/registrar_cod_cierre.html', context)
 
 
+# gestion/views/cod_cierre.py
+
 @login_required
 @no_cache
 def carga_masiva_cod_cierre_view(request):
     """
-    Gestiona la carga masiva de códigos de cierre desde un archivo CSV.
+    Gestiona la carga masiva de códigos de cierre desde un archivo CSV,
+    validando duplicados por clave compuesta y registrando un resumen detallado.
     """
     if request.method == 'POST':
         logger.info(
             f"Usuario '{request.user}' ha iniciado una carga masiva de códigos de cierre.")
         csv_file = request.FILES.get('csv_file')
+        context = {}
 
         if not csv_file or not csv_file.name.endswith('.csv'):
-            logger.warning(
-                f"Intento de carga masiva de códigos de cierre por '{request.user}' con archivo no válido.")
             messages.error(
                 request, 'Por favor, seleccione un archivo CSV válido.')
             return render(request, 'gestion/carga_masiva_cod_cierre.html')
 
-        success_count = 0
-        failed_rows = []
-        # Contador para el total de registros no vacíos en el archivo
-        total_records_in_file = 0
-
         try:
-            # Intentar decodificar como UTF-8, si falla, usar latin-1
+            # Decodificación del archivo
             try:
                 decoded_file = csv_file.read().decode('utf-8')
             except UnicodeDecodeError:
@@ -192,95 +190,150 @@ def carga_masiva_cod_cierre_view(request):
                 decoded_file = csv_file.read().decode('latin-1')
 
             io_string = io.StringIO(decoded_file)
-            # Usar DictReader para leer por nombre de columna y especificar el delimitador
             reader = csv.DictReader(io_string, delimiter=';')
+            all_rows = list(reader)
+            total_records_in_file = len(all_rows)
 
-            for line_number, row in enumerate(reader, start=2):
+            # --- NUEVO: VALIDACIÓN DE DUPLICADOS POR CLAVE COMPUESTA ---
+            seen_keys = set()
+            duplicates_found = []
+            for line_number, row in enumerate(all_rows, start=2):
+                id_val = row.get('idCodCierre', '').strip()
+                cod_val = row.get('cod_cierre', '').strip()
+
+                if not id_val or not cod_val:
+                    continue  # No se puede validar una clave incompleta
+
+                composite_key = (id_val, cod_val)
+                if composite_key in seen_keys:
+                    duplicates_found.append({
+                        'line': line_number,
+                        'id': id_val,
+                        'cod': cod_val
+                    })
+                else:
+                    seen_keys.add(composite_key)
+
+            if duplicates_found:
+                error_msg = "El archivo contiene combinaciones de 'idCodCierre' y 'cod_cierre' duplicadas y no pudo ser procesado."
+                logger.error(
+                    f"{error_msg} Usuario: '{request.user}'. Duplicados: {duplicates_found}")
+                messages.error(request, error_msg +
+                               " Revisa los detalles a continuación.")
+                context['duplicates'] = duplicates_found
+                return render(request, 'gestion/carga_masiva_cod_cierre.html', context)
+            # --- FIN DE LA VALIDACIÓN DE DUPLICADOS ---
+
+            success_count = 0
+            failed_rows = []
+
+            for line_number, row in enumerate(all_rows, start=2):
                 try:
-                    # Omitir filas donde todos los valores están vacíos
                     if not any(field.strip() for field in row.values()):
+                        total_records_in_file -= 1
                         continue
 
-                    # Incrementar el contador de registros encontrados para procesar
-                    total_records_in_file += 1
-
-                    # 1. Extraer y validar el ID del código de cierre (clave primaria)
+                    # ... (lógica de procesamiento de fila que ya tenías)
                     id_cod_cierre_str = row.get('idCodCierre', '').strip()
                     if not id_cod_cierre_str:
                         raise ValueError(
-                            "La columna 'idCodCierre' es obligatoria y no puede estar vacía.")
-                    try:
-                        id_cod_cierre_pk = int(id_cod_cierre_str)
-                    except ValueError:
-                        raise ValueError(
-                            f"El 'idCodCierre' ('{id_cod_cierre_str}') no es un número válido.")
+                            "La columna 'idCodCierre' es obligatoria.")
+                    id_cod_cierre_pk = int(id_cod_cierre_str)
 
-                    # 2. Extraer los demás campos usando los nombres de las cabeceras
                     cod_cierre = row.get('cod_cierre', '').strip()
-                    desc_cod_cierre = row.get('descripcion_cierre', '').strip()
-                    causa_cierre = row.get('causa_cierre', '').strip()
                     id_aplicacion = row.get('id_aplicacion', '').strip()
-
-                    # 3. Validar campos obligatorios
                     if not all([cod_cierre, id_aplicacion]):
                         raise ValueError(
-                            "El 'cod_cierre' y el 'id_aplicacion' son obligatorios.")
+                            "Las columnas 'cod_cierre' y 'id_aplicacion' son obligatorias.")
 
-                    # 4. Obtener la instancia de la aplicación relacionada
                     aplicacion_obj = Aplicacion.objects.get(pk=id_aplicacion)
 
-                    # 5. Usar update_or_create con el ID como clave de búsqueda
-                    obj, created = CodigoCierre.objects.update_or_create(
-                        id=id_cod_cierre_pk,  # <-- Clave de búsqueda es el ID del CSV
+                    CodigoCierre.objects.update_or_create(
+                        id=id_cod_cierre_pk,
                         defaults={
                             'cod_cierre': cod_cierre,
                             'aplicacion': aplicacion_obj,
-                            'desc_cod_cierre': desc_cod_cierre,
-                            'causa_cierre': causa_cierre
-                        })
-                    action = "creado con ID fijo" if created else "actualizado"
-                    logger.info(
-                        f"Registro ID={id_cod_cierre_pk} ('{cod_cierre}') {action} exitosamente.")
+                            'desc_cod_cierre': row.get('descripcion_cierre', '').strip(),
+                            'causa_cierre': row.get('causa_cierre', '').strip()
+                        }
+                    )
                     success_count += 1
 
-                except Aplicacion.DoesNotExist:
-                    error_msg = f"La aplicación con ID '{id_aplicacion}' no existe."
-                    logger.warning(
-                        f"Error en línea {line_number} de carga masiva: {error_msg}. Datos: {row}")
-                    failed_rows.append({'line': line_number, 'row_data': ';'.join(
-                        map(str, row.values())), 'error': error_msg})
                 except Exception as e:
-                    error_message = f"Dato problemático: {row}. Error: {e}"
-                    logger.error(
-                        f"Error en la línea {line_number} del CSV. {error_message}", exc_info=True)
-                    failed_rows.append(
-                        {'line': line_number, 'row_data': ';'.join(map(str, row.values())), 'error': str(e)})
+                    failed_rows.append({
+                        'line': line_number,
+                        'row_data': ';'.join(row.values()),
+                        'error': str(e)
+                    })
 
-            # --- INICIO DE CAMBIOS: Mensajes de resumen estadístico ---
-            failed_count = len(failed_rows)
+            # --- NUEVO: LOGGING DETALLADO Y MENSAJES A USUARIO ---
+            log_summary = f"""
+--------------------------------------------------
+RESUMEN DE CARGA MASIVA DE CÓDIGOS DE CIERRE
+Usuario: {request.user}
+Archivo: {csv_file.name}
+--------------------------------------------------
+Total de filas en el archivo: {total_records_in_file}
+Cargados/Actualizados con éxito: {success_count}
+Filas con errores: {len(failed_rows)}
+--------------------------------------------------"""
 
-            if total_records_in_file > 0:
-                summary_message = (
-                    f"Proceso de carga finalizado. "
-                    f"Registros encontrados: {total_records_in_file}. "
-                    f"Cargados/Actualizados: {success_count}. "
-                    f"No cargados: {failed_count}."
-                )
-                if failed_count > 0:
-                    messages.warning(request, summary_message)
-                else:
-                    messages.success(request, summary_message)
-            else:
-                messages.info(
-                    request, "El archivo CSV está vacío o no contiene datos para procesar.")
-            # --- FIN DE CAMBIOS ---
+            if failed_rows:
+                log_summary += "\nDETALLE DE ERRORES:\n"
+                for item in failed_rows:
+                    log_summary += f"  - Fila {item['line']}: {item['error']} (Datos: {item['row_data']})\n"
+                log_summary += "--------------------------------------------------"
+
+            logger.info(log_summary)
+
+            if success_count > 0:
+                messages.success(
+                    request, f'¡Carga completada! Se procesaron {success_count} registros con éxito.')
+            if failed_rows:
+                messages.warning(
+                    request, f'Se encontraron {len(failed_rows)} errores. Revisa los detalles en el log del sistema.')
+
+            context = {
+                'failed_rows': failed_rows,
+                'stats': {
+                    'total': total_records_in_file,
+                    'success': success_count,
+                    'failed': len(failed_rows)
+                }
+            }
+            return render(request, 'gestion/carga_masiva_cod_cierre.html', context)
+
         except Exception as e:
             logger.critical(
-                f"Error CRÍTICO durante la carga masiva de códigos de cierre por '{request.user}': {e}", exc_info=True)
+                f"Error CRÍTICO en carga masiva por '{request.user}': {e}", exc_info=True)
             messages.error(
-                request, f"Ocurrió un error general al procesar el archivo: {e}")
-        return render(request, 'gestion/carga_masiva_cod_cierre.html', {'failed_rows': failed_rows})
+                request, f"Ocurrió un error general e inesperado: {e}")
+            return render(request, 'gestion/carga_masiva_cod_cierre.html')
 
-    logger.info(
-        f"Usuario '{request.user}' accedió a la página de carga masiva de códigos de cierre.")
     return render(request, 'gestion/carga_masiva_cod_cierre.html')
+
+
+def obtener_ultimos_codigos_cierre(request, aplicacion_id):
+    """
+    Esta vista es llamada por AJAX desde el formulario de registro.
+    Devuelve los últimos 5 códigos de cierre para una aplicación específica en formato JSON.
+    """
+    try:
+        # Hacemos la consulta a la base de datos:
+        # 1. Filtramos por el id de la aplicación.
+        # 2. Ordenamos por id en orden descendente para obtener los más recientes.
+        # 3. Limitamos el resultado a 5.
+        codigos = CodigoCierre.objects.filter(
+            aplicacion_id=aplicacion_id).order_by('-id')[:5]
+
+        # Convertimos el queryset a una lista de diccionarios que se puede convertir a JSON.
+        data = list(codigos.values('cod_cierre', 'desc_cod_cierre'))
+
+        # Devolvemos los datos en una respuesta JSON.
+        return JsonResponse({'codigos': data})
+
+    except Exception as e:
+        # En caso de cualquier error, devolvemos una respuesta de error.
+        logger.error(
+            f"Error en vista AJAX 'obtener_ultimos_codigos_cierre' para app_id {aplicacion_id}: {e}", exc_info=True)
+        return JsonResponse({'error': str(e)}, status=500)
