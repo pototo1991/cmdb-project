@@ -17,8 +17,9 @@
     <a href="{% url 'gestion:aplicaciones' %}" class="navbar-link">Mantenedor Aplicaciones</a>
 {% endblock extra_nav_buttons %}
 
+{% block main_class %}main-content-centered{% endblock %}
+
 {% block content %}
-<div class="main-content">
     <div class="page-header">
         <h1 class="page-title">
             {% if codigo_cierre %}
@@ -39,14 +40,14 @@
                 <div class="form-group">
                     <label for="aplicacion">(*) Aplicación Involucrada</label>
                     
-                    {# ESTE ES EL SELECT CORREGIDO CON EL ATRIBUTO data-url #}
                     <select id="aplicacion" 
                             name="aplicacion" 
                             {% if not codigo_cierre %}data-url="{% url 'gestion:get_ultimos_codigos_cierre' 0 %}"{% endif %}
                             required>
                         <option value="">-- Seleccione aplicación --</option>
                         
-                        {% for app in todas_las_aplicaciones %}
+                        {# SE AÑADE EL FILTRO |dictsort:"nombre_aplicacion" PARA ORDENAR #}
+                        {% for app in todas_las_aplicaciones|dictsort:"nombre_aplicacion" %}
                             <option value="{{ app.id }}" {% if codigo_cierre.aplicacion.id == app.id %}selected{% endif %}>{{ app.nombre_aplicacion }} ({{ app.cod_aplicacion }})</option>
                         {% endfor %}
                     </select>
@@ -91,7 +92,6 @@
         {# --- FIN DE LA NUEVA SECCIÓN --- #}
 
     </div>
-</div>
 
 {# --- INICIO DEL SCRIPT JAVASCRIPT --- #}
 {# Este script también se añade solo si estamos creando un código nuevo #}

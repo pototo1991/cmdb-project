@@ -44,11 +44,11 @@
             <div class="form-block">
                 <h3 class="form-block-title">Datos Principales</h3>
                 <div class="form-group">
-                    <label for="incidencia">ID Incidencia (*)</label>
-                    <input type="text" id="incidencia" name="incidencia" value="{{ incidencia.id_incidencia }}" required {% if incidencia %}readonly{% endif %}>
+                    <label for="incidencia">ID Incidencia</label>
+                    <input type="text" id="incidencia" name="incidencia" value="{% if form_data %}{{ form_data.incidencia }}{% else %}{{ incidencia.incidencia|default:'' }}{% endif %}" required {% if incidencia %}readonly{% endif %}>
                 </div>
                 <div class="form-group">
-                    <label for="aplicacion">Aplicación (*)</label>
+                    <label for="aplicacion">Aplicación</label>
                     <select id="aplicacion" name="aplicacion" required>
                         <option value="">Seleccione una aplicación...</option>
                         {% for app in aplicaciones %}
@@ -90,7 +90,7 @@
             <div class="form-block">
                 <h3 class="form-block-title">Clasificación</h3>
                 <div class="form-group">
-                    <label for="estado">Estado (*)</label>
+                    <label for="estado">Estado</label>
                     <select id="estado" name="estado" required>
                         <option value="" disabled selected>Seleccione un estado...</option>
                         {% for est in estados %}
@@ -99,7 +99,7 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="impacto">Impacto (*)</label>
+                    <label for="impacto">Impacto</label>
                     <select id="impacto" name="impacto" required>
                         <option value="" disabled selected>Seleccione un impacto...</option>
                         {% for imp in impactos %}
@@ -117,7 +117,7 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="bloque">Bloque (*)</label>
+                    <label for="bloque">Bloque</label>
                     <select id="bloque" name="bloque" required>
                         <option value="" disabled selected>Seleccione un bloque...</option>
                         {% for blq in bloques %}
@@ -141,6 +141,21 @@
                     <label for="codigo_cierre">Código de Cierre</label>
                     <select id="codigo_cierre" name="codigo_cierre">
                         <option value="">Seleccione una aplicación primero...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="observaciones">Observaciones</label>
+                    <textarea id="observaciones" name="observaciones" rows="3">{{ incidencia.observaciones }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label for="demandas">Demandas</label>
+                    <textarea id="demandas" name="demandas" rows="3">{{ incidencia.demandas }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label for="workaround">Workaround Disponible</label>
+                    <select id="workaround" name="workaround" class="form-control">
+                        <option value="No" {% if incidencia.workaround == "No" %}selected{% endif %}>No</option>
+                        <option value="Sí" {% if incidencia.workaround == "Sí" %}selected{% endif %}>Sí</option>
                     </select>
                 </div>
             </div>
@@ -177,21 +192,7 @@
                     <label for="bitacora">Bitácora</label>
                     <textarea id="bitacora" name="bitacora" rows="3">{{ incidencia.bitacora }}</textarea>
                 </div>
-                <div class="form-group">
-                    <label for="observaciones">Observaciones</label>
-                    <textarea id="observaciones" name="observaciones" rows="3">{{ incidencia.observaciones }}</textarea>
-                </div>
-                <div class="form-group">
-                    <label for="demandas">Demandas</label>
-                    <textarea id="demandas" name="demandas" rows="3">{{ incidencia.demandas }}</textarea>
-                </div>
-                <div class="form-group">
-                    <label for="workaround">Workaround Disponible</label>
-                    <select id="workaround" name="workaround" class="form-control">
-                        <option value="No" {% if incidencia.workaround == "No" %}selected{% endif %}>No</option>
-                        <option value="Sí" {% if incidencia.workaround == "Sí" %}selected{% endif %}>Sí</option>
-                    </select>
-                </div>
+                
             </div>
         </div>
 
@@ -203,7 +204,7 @@
                     Registrar Incidencia
                 {% endif %}
             </button>
-            <a href="#" class="btn btn-secondary">Carga Masiva Inicial</a>
+            <!-- <a href="#" class="btn btn-secondary">Carga Masiva Inicial</a> -->
             <a href="{% url 'gestion:incidencias' %}" class="btn btn-secondary">Cancelar</a>
         </div>
     </form>

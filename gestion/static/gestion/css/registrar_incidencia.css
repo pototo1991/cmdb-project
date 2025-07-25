@@ -182,3 +182,28 @@
     color: var(--color-blanco);
     border-color: var(--color-purpura);
 }
+
+
+/* ========================================= */
+
+
+/* --- AJUSTE PARA CAMPO BITÁCORA --- */
+
+
+/* ========================================= */
+
+#bitacora {
+    /*
+     * Aumentamos la altura inicial del campo.
+     * El bloque "Bitácora y Notas" es el único en su columna,
+     * así que podemos darle bastante altura sin problema.
+     * ¡Puedes cambiar 350px por el valor que prefieras!
+     */
+    height: 350px;
+    /*
+     * Habilitamos de nuevo el cambio de tamaño, pero solo vertical.
+     * Esto sobreescribe la regla general "resize: none;" que
+     * aplicaste a todos los textareas, pero únicamente para este elemento.
+     */
+    resize: vertical;
+}

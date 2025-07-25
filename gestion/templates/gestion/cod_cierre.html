@@ -12,8 +12,7 @@
 {% endblock extra_nav_buttons %}
 
 {% block content %}
-<div class="main-content">
-    
+
     <div class="page-header">
         <h1 class="page-title">Listado de Códigos de Cierre</h1>
         <a href="{% url 'gestion:registrar_cod_cierre' %}" class="btn btn-primary">Registrar Código de Cierre</a>
@@ -48,7 +47,7 @@
                         </a>
                     </td>
                     <td>{{ codigo.cod_cierre }}</td>
-                    <td>{{ codigo.aplicacion.nombre_aplicacion }}</td>
+                    <td>{{ codigo.aplicacion.nombre_aplicacion|truncatechars:20 }}</td>
                     <td>{{ codigo.desc_cod_cierre }}</td>                    
                     <td>{{ codigo.causa_cierre }}</td>
                 </tr>
@@ -56,7 +55,6 @@
             </tbody>
         </table>
     </div>
-</div>
 {% endblock content %}
 
 {% block extra_scripts %}
@@ -91,15 +89,44 @@ $(document).ready(function() {
         "paging": true,
         "pageLength": 25,
         "order": [[ 2, "asc" ]],
+
+        // =======================================================
+        //     SECCIÓN AÑADIDA PARA AJUSTAR LAS COLUMNAS
+        // =======================================================
+        "columnDefs": [
+            { "width": "5%", "targets": [0, 1] },   // Eliminar y Editar
+            { "width": "10%", "targets": 2 },      // Código de Cierre
+            { "width": "10%", "targets": 3 },      // Aplicación
+            { "width": "30%", "targets": 4 },      // Descripción
+            { "width": "30%", "targets": 5 }       // Causa de Cierre
+        ],
+        // =======================================================
+
         "initComplete": function(settings, json) {
             $('#tabla-codigos-cierre').removeClass('data-table-loading');
         },
         "drawCallback": function(settings) {
-            var totalRegistros = {{ total_registros|default:0 }};
-            var totalInfo = '<div class="total-records-info">Total de registros existentes: <strong>' + totalRegistros + '</strong></div>';
-            if ($('#tabla-codigos-cierre_info .total-records-info').length === 0) {
-                $('#tabla-codigos-cierre_info').append(totalInfo);
-            }
+            // 1. Obtenemos la instancia de la API de DataTables para trabajar con ella.
+            var api = this.api();
+
+            // 2. Obtenemos los diferentes contadores que necesitamos.
+            var filteredCount = api.page.info().recordsDisplay; // Total de registros después de aplicar filtros.
+            var totalRegistrosDB = {{ total_registros|default:0 }}; // Total de registros en la BD.
+
+            // 3. Seleccionamos el contenedor donde se muestra la información.
+            var infoContainer = $('#tabla-codigos-cierre_info');
+            
+            // 4. Creamos los HTML para nuestros contadores personalizados.
+            var filteredInfo = '<div class="filtered-records-info">Registros encontrados (filtrados): <strong>' + filteredCount + '</strong></div>';
+            var totalInfo = '<div class="total-records-info">Total de registros existentes: <strong>' + totalRegistrosDB + '</strong></div>';
+
+            // 5. Eliminamos los contadores personalizados anteriores para evitar que se dupliquen.
+            infoContainer.find('.filtered-records-info').remove();
+            infoContainer.find('.total-records-info').remove();
+            
+            // 6. Añadimos los nuevos contadores al contenedor.            
+            infoContainer.append(totalInfo);
+            infoContainer.append(filteredInfo);
         }
     });
 });

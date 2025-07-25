@@ -47,9 +47,11 @@
     </div>
     {% endif %}
 
-    {% block content %}
-    {# El contenido específico de cada página irá aquí #}
-    {% endblock content %}
+    <main class="main-content {% block main_class %}{% endblock %}">
+        {% block content %}
+            {# El contenido de las páginas hijas irá aquí, SIN el div.main-content #}
+        {% endblock content %}
+    </main>
 
     {% block footer %}
         <div class="footer">

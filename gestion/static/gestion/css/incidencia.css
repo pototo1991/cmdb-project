@@ -10,9 +10,8 @@
 /* Contenedor general de la página */
 
 .page-container {
-    width: 95%;
-    max-width: 1600px;
-    /* Ancho amplio para páginas con tablas y filtros */
+    width: 98%;
+    /* max-width: 2400px; */
     margin: 20px auto;
     padding: 10px;
 }
@@ -44,9 +43,11 @@
 
 .btn-secondary {
     background-color: transparent;
-    border: 1px solid var(--color-gris-ceramica);
+    /* La línea del borde se ha quitado */
     color: var(--color-gris-ceramica);
     padding: 8px 15px;
+    border: 1px solid transparent;
+    /* Opcional: para evitar que el botón "salte" al aparecer el borde en hover */
     border-radius: 5px;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -119,4 +120,18 @@
 
 .btn-report:hover {
     background-color: var(--color-reporte-hover, #2a8c4d);
+}
+
+
+/* --- Unificación de Anchos --- */
+
+
+/* Para asegurar que el contenedor de filtros y el de la tabla tengan el mismo ancho */
+
+.filter-box,
+.table-container {
+    width: 100%;
+    /* Hacemos que ambos ocupen el 100% de su contenedor padre (.page-container) */
+    box-sizing: border-box;
+    /* Asegura que el padding y borde se incluyan en el ancho total */
 }

@@ -27,31 +27,67 @@
             <div id="filter-container" style="display: none;">
                 <div class="filter-grid">
                     <div class="filter-group">
+                        <label for="incidencia">Incidencia:</label>
+                        <input type="text" id="incidencia" name="incidencia" value="{{ request.GET.incidencia|default:'' }}" placeholder="Buscar por nombre...">
+                    </div>
+                    <div class="filter-group">
                         <label for="aplicativo">Aplicativo:</label>
                         <select id="aplicativo" name="aplicativo">
                             <option value="">Todos</option>
-                            <option value="app1">Aplicación 1</option>
-                            <option value="app2">Aplicación 2</option>
+                            {% for app in aplicaciones %}
+                                <option value="{{ app.id }}" {% if request.GET.aplicativo == app.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ app.nombre_aplicacion }}
+                                </option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="filter-group">
-                        <label for="bloque">Bloques:</label>
+                        <label for="bloque">Bloque:</label>
                         <select id="bloque" name="bloque">
                             <option value="">Todos</option>
-                            <option value="bloque1">Bloque 1</option>
-                            <option value="bloque2">Bloque 2</option>
+                            {% for bloque in bloques %}
+                                <option value="{{ bloque.id }}" {% if request.GET.bloque == bloque.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ bloque.desc_bloque }}
+                                </option>
+                            {% endfor %}
                         </select>
                     </div>
+                    
+                    <div class="filter-group">
+                        <label for="codigo_cierre">Código de Cierre:</label>
+                        <select id="codigo_cierre" name="codigo_cierre">
+                            <option value="">Todos</option>
+                            {% for codigo in codigos_cierre %}
+                                <option value="{{ codigo.id }}" {% if request.GET.codigo_cierre == codigo.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ codigo.cod_cierre }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="fecha_desde">Fecha Cierre (Desde):</label>
+                        <input type="date" id="fecha_desde" name="fecha_desde" value="{{ request.GET.fecha_desde|default:'' }}">
+                    </div>
+                    <div class="filter-group">
+                        <label for="fecha_hasta">Fecha Cierre (Hasta):</label>
+                        <input type="date" id="fecha_hasta" name="fecha_hasta" value="{{ request.GET.fecha_hasta|default:'' }}">
+                    </div>
                 </div>
-                <button type="submit" class="btn filter-btn">Filtrar</button>
+                <div class="filter-actions">
+                    <button type="submit" class="btn filter-btn">Filtrar</button>
+                    <button type="button" id="limpiar-filtros-btn" class="btn filter-btn">Limpiar Filtros</button>
+                </div>
             </div>
         </div>
     </form>
 
     <div class="action-buttons-container">
-        <a href="{% url 'gestion:registrar_incidencia' %}" class="btn">Registrar Incidencia</a>
-        <a href="{% url 'gestion:carga_masiva_incidencia' %}" class="btn">Carga Masiva</a>
-        <button class="btn btn-report">Generar Reporte</button>
+        <a href="{% url 'gestion:registrar_incidencia' %}" class="btn filter-btn">Registrar Incidencia</a>
+        <a href="{% url 'gestion:carga_masiva_incidencia' %}" class="btn filter-btn">Carga Masiva</a>
+        <button class="btn btn-report filter-btn">Generar Reporte</button>
+
+        <a href="{% url 'gestion:incidencias' %}?fecha_desde={{ fecha_inicio_mes }}&fecha_hasta={{ fecha_fin_mes }}" class="btn btn-info filter-btn">Ver Mes Actual</a>
+        <a href="{% url 'gestion:incidencias' %}" class="btn btn-secondary filter-btn">Ver Todos</a>
     </div>
 
     <div class="table-container">
@@ -67,8 +103,10 @@
                     <th>Estado</th>
                     <th>Severidad</th>
                     <th>Bloque</th>
+                    <th>Usuario</th>
                     <th>Fecha Apertura</th>
                     <th>Fecha Cierre</th>
+                    <th>Grupo Resolutor</th>
                 </tr>
             </thead>
             <tbody>
@@ -95,8 +133,10 @@
                     <td>{{ incidencia.estado.desc_estado }}</td>
                     <td>{{ incidencia.severidad.desc_severidad|default:"N/A" }}</td>
                     <td>{{ incidencia.bloque.desc_bloque }}</td>
+                    <td>{{ incidencia.usuario_asignado.usuario }}</td>
                     <td>{{ incidencia.fecha_apertura|date:"Y-m-d H:i" }}</td>
                     <td>{{ incidencia.fecha_ultima_resolucion|date:"Y-m-d H:i" }}</td>
+                    <td>{{ incidencia.grupo_resolutor.desc_grupo_resol|default:"No asignado" }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -108,7 +148,7 @@
 {% block extra_scripts %}
 <script>
 $(document).ready(function() {
-    $('#tabla-incidencias').DataTable({
+    var table = $('#tabla-incidencias').DataTable({
         "language": {
             "lengthMenu": "Mostrar _MENU_ registros por página",
             "zeroRecords": "No se encontraron resultados",
@@ -127,27 +167,56 @@ $(document).ready(function() {
             [10, 25, 50, 100, -1],
             [10, 25, 50, 100, "Todas"]
         ],
-        "scrollY": "60vh",
+        "width": "100%",
+        "scrollY": "48vh",
         "scrollCollapse": true,
         "paging": true,
         "pageLength": 25,
         "order": [[ 2, "asc" ]],
+        "columnDefs": [
+            { "width": "4%", "targets": [0, 1] },
+            { "width": "10%", "targets": 2 },
+            { "width": "15%", "targets": 4 },
+            { "width": "7%", "targets": 8 }
+        ],
         "initComplete": function(settings, json) {
-            // CORRECCIÓN: Apunta al ID correcto
             $('#tabla-incidencias').removeClass('data-table-loading');
         },
+        "drawCallback": function(settings) {
+            var api = this.api();
+            var filteredCount = api.page.info().recordsDisplay;
+            var totalRegistrosDB = {{ total_registros|default:0 }};
+            var infoContainer = $('#tabla-incidencias_info');
+            var filteredInfo = '<div class="filtered-records-info">Registros encontrados (filtrados): <strong>' + filteredCount + '</strong></div>';
+            var totalInfo = '<div class="total-records-info">Total de registros existentes: <strong>' + totalRegistrosDB + '</strong></div>';
+            infoContainer.find('.filtered-records-info').remove();
+            infoContainer.find('.total-records-info').remove();
+            infoContainer.append(totalInfo);
+            infoContainer.append(filteredInfo);
+        }
     });
 
     // Script para el botón de mostrar/ocultar filtros
-    $('#toggle-filters-btn').on('click', function() {
+    $('#toggle-filters-btn').on('click', function(event) {
         var filterContainer = $('#filter-container');
         if (filterContainer.is(':visible')) {
             filterContainer.slideUp();
             $(this).text('Mostrar Filtros');
         } else {
-            filterContainer.slideDown();
+            filterContainer.slideDown(function() {
+                // Forzamos un reajuste Y un redibujado completo de la tabla.
+                // Esto alineará los encabezados con el cuerpo de la tabla.
+                table.columns.adjust().draw();
+            });
             $(this).text('Ocultar Filtros');
         }
+    });
+
+    // Script para el botón de limpiar filtros sin recargar la página
+    $('#limpiar-filtros-btn').on('click', function() {
+        var form = $(this).closest('form');
+        form.find('input[type="text"], input[type="date"]').val('');
+        form.find('select').prop('selectedIndex', 0);
     });
 });
 </script>

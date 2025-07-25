@@ -85,6 +85,14 @@ body {
 /* --- ================================== --- */
 
 .navbar {
+    position: fixed;
+    /* Fija el elemento a la ventana */
+    top: 0;
+    /* Lo posiciona en la parte superior */
+    left: 0;
+    /* Lo posiciona a la izquierda */
+    z-index: 1000;
+    /* Asegura que esté por encima de otros contenidos */
     width: 100%;
     background-color: var(--color-morado);
     padding: 15px 30px;
@@ -161,8 +169,9 @@ body {
     align-items: center;
     justify-content: flex-start;
     padding: 40px;
+    padding-top: 120px;
+    /* <-- AÑADE ESTA LÍNEA */
     text-align: center;
-    /* La línea 'overflow-y: auto;' ha sido eliminada. */
 }
 
 .btn {
@@ -301,4 +310,21 @@ body {
     .main-content {
         padding: 20px;
     }
+}
+
+
+/* --- ================================== --- */
+
+
+/* ---      MODIFICADOR DE LAYOUT         --- */
+
+
+/* --- ================================== --- */
+
+
+/* Esta clase se usa en páginas con poco contenido (como formularios)
+   para centrarlas verticalmente en el espacio disponible. */
+
+.main-content.main-content-centered {
+    justify-content: center;
 }

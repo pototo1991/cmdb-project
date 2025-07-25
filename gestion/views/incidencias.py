@@ -2,12 +2,13 @@
 
 import csv
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import F
+from django.utils import timezone
 from django.db import transaction
 from .utils import no_cache, logger
 from ..models import Aplicacion, Estado, Severidad, Impacto, GrupoResolutor, Interfaz, Cluster, Bloque, Incidencia, CodigoCierre, Usuario
@@ -18,17 +19,95 @@ from unidecode import unidecode
 @login_required
 @no_cache
 def incidencias_view(request):
-    """Maneja la lógica para la página de gestión de incidencias."""
+    """
+    Maneja la lógica para la página de gestión de incidencias.
+    Muestra todos los registros por defecto y permite filtrar.
+    """
     logger.info(
         f"El usuario '{request.user}' está viendo la lista de incidencias.")
-    incidencias = Incidencia.objects.select_related(
-        'aplicacion', 'estado', 'severidad', 'impacto', 'bloque'
+
+    # 1. Queryset base optimizado.
+    incidencias_qs = Incidencia.objects.select_related(
+        'aplicacion', 'estado', 'severidad', 'impacto', 'bloque', 'codigo_cierre'
     ).all()
-    total_registros = incidencias.count()
+
+    # 2. Obtener valores de los filtros desde la URL (request.GET)
+    filtro_app_id = request.GET.get('aplicativo')
+    filtro_bloque_id = request.GET.get('bloque')
+    filtro_incidencia = request.GET.get('incidencia')
+    filtro_codigo_id = request.GET.get('codigo_cierre')
+    filtro_fecha_desde = request.GET.get('fecha_desde')
+    filtro_fecha_hasta = request.GET.get('fecha_hasta')
+
+    # 3. Aplicar filtros al queryset solo si el usuario los envía
+    if filtro_app_id and filtro_app_id.isdigit():
+        incidencias_qs = incidencias_qs.filter(aplicacion_id=filtro_app_id)
+
+    if filtro_bloque_id and filtro_bloque_id.isdigit():
+        incidencias_qs = incidencias_qs.filter(bloque_id=filtro_bloque_id)
+
+    if filtro_incidencia:
+        incidencias_qs = incidencias_qs.filter(
+            incidencia__icontains=filtro_incidencia)
+
+    if filtro_codigo_id and filtro_codigo_id.isdigit():
+        incidencias_qs = incidencias_qs.filter(
+            codigo_cierre_id=filtro_codigo_id)
+
+    if filtro_fecha_desde:
+        try:
+            fecha_obj = datetime.strptime(filtro_fecha_desde, '%Y-%m-%d')
+            fecha_aware = timezone.make_aware(
+                fecha_obj, timezone.get_default_timezone())
+            incidencias_qs = incidencias_qs.filter(
+                fecha_ultima_resolucion__gte=fecha_aware)
+        except (ValueError, TypeError):
+            pass
+
+    if filtro_fecha_hasta:
+        try:
+            fecha_obj = datetime.strptime(filtro_fecha_hasta, '%Y-%m-%d')
+            fecha_obj_fin_dia = fecha_obj + timedelta(days=1)
+            fecha_aware = timezone.make_aware(
+                fecha_obj_fin_dia, timezone.get_default_timezone())
+            incidencias_qs = incidencias_qs.filter(
+                fecha_ultima_resolucion__lt=fecha_aware)
+        except (ValueError, TypeError):
+            pass
+
+    # --- INICIO DE LA MODIFICACIÓN ---
+    # 4. Calcular siempre las fechas del mes actual para el botón "Ver Mes Actual"
+    hoy = timezone.now()
+    primer_dia_mes = hoy.replace(day=1)
+
+    if primer_dia_mes.month == 12:
+        primer_dia_mes_siguiente = primer_dia_mes.replace(
+            year=primer_dia_mes.year + 1, month=1)
+    else:
+        primer_dia_mes_siguiente = primer_dia_mes.replace(
+            month=primer_dia_mes.month + 1)
+
+    ultimo_dia_mes = primer_dia_mes_siguiente.replace(
+        day=1) - timedelta(days=1)
+
+    # 5. Obtener todos los objetos para llenar los <select> de los filtros
+    aplicaciones = Aplicacion.objects.all().order_by('nombre_aplicacion')
+    bloques = Bloque.objects.all().order_by('desc_bloque')
+    codigos_cierre = CodigoCierre.objects.all().order_by('cod_cierre')
+
+    # 6. Preparar el contexto para la plantilla
     context = {
-        'lista_de_incidencias': incidencias,
-        'total_registros': total_registros,
+        'lista_de_incidencias': incidencias_qs,
+        'total_registros': Incidencia.objects.count(),
+        'aplicaciones': aplicaciones,
+        'bloques': bloques,
+        'codigos_cierre': codigos_cierre,
+        # Añadimos las fechas formateadas para usarlas en el link del botón
+        'fecha_inicio_mes': primer_dia_mes.strftime('%Y-%m-%d'),
+        'fecha_fin_mes': ultimo_dia_mes.strftime('%Y-%m-%d'),
     }
+    # --- FIN DE LA MODIFICACIÓN ---
+
     return render(request, 'gestion/incidencia.html', context)
 
 
@@ -179,7 +258,47 @@ def editar_incidencia_view(request, pk):
             incidencia.descripcion_incidencia = request.POST.get(
                 'descripcion_incidencia', '')
 
-            # ... (se actualizan todos los demás campos de la misma forma) ...
+            # Fechas
+            fecha_apertura_str = request.POST.get('fecha_apertura')
+            incidencia.fecha_apertura = datetime.fromisoformat(
+                fecha_apertura_str) if fecha_apertura_str else None
+            fecha_resolucion_str = request.POST.get('fecha_ultima_resolucion')
+            incidencia.fecha_ultima_resolucion = datetime.fromisoformat(
+                fecha_resolucion_str) if fecha_resolucion_str else None
+
+            # Campos de texto
+            incidencia.causa = request.POST.get('causa', '')
+            incidencia.bitacora = request.POST.get('bitacora', '')
+            incidencia.tec_analisis = request.POST.get('tec_analisis', '')
+            incidencia.correccion = request.POST.get('correccion', '')
+            incidencia.solucion_final = request.POST.get('solucion_final', '')
+            incidencia.observaciones = request.POST.get('observaciones', '')
+            incidencia.demandas = request.POST.get('demandas', '')
+            incidencia.workaround = request.POST.get('workaround', 'No')
+
+            # Relaciones (Foreign Keys)
+            incidencia.aplicacion = Aplicacion.objects.get(
+                pk=request.POST.get('aplicacion'))
+            incidencia.estado = Estado.objects.get(
+                pk=request.POST.get('estado'))
+            incidencia.impacto = Impacto.objects.get(
+                pk=request.POST.get('impacto'))
+            incidencia.bloque = Bloque.objects.get(
+                pk=request.POST.get('bloque'))
+
+            # Relaciones opcionales
+            incidencia.severidad = Severidad.objects.get(pk=request.POST.get(
+                'severidad')) if request.POST.get('severidad') else None
+            incidencia.grupo_resolutor = GrupoResolutor.objects.get(pk=request.POST.get(
+                'grupo_resolutor')) if request.POST.get('grupo_resolutor') else None
+            incidencia.interfaz = Interfaz.objects.get(pk=request.POST.get(
+                'interfaz')) if request.POST.get('interfaz') else None
+            incidencia.cluster = Cluster.objects.get(pk=request.POST.get(
+                'cluster')) if request.POST.get('cluster') else None
+            incidencia.codigo_cierre = CodigoCierre.objects.get(pk=request.POST.get(
+                'codigo_cierre')) if request.POST.get('codigo_cierre') else None
+            incidencia.usuario_asignado = Usuario.objects.get(pk=request.POST.get(
+                'usuario_asignado')) if request.POST.get('usuario_asignado') else None
 
             # Guardamos los cambios en la base de datos
             incidencia.save()
@@ -188,15 +307,16 @@ def editar_incidencia_view(request, pk):
                 request, f'¡La incidencia "{incidencia.incidencia}" ha sido actualizada con éxito!')
             return redirect('gestion:incidencias')
 
-        except Exception as e:
+        except (ObjectDoesNotExist, ValueError) as e:
             logger.error(
                 f"Error al editar incidencia '{incidencia.id}': {e}", exc_info=True)
             messages.error(
-                request, f'Ocurrió un error al actualizar la incidencia: {e}')
+                request, f'Ocurrió un error al actualizar la incidencia: {e}. Por favor, revisa los campos.')
 
             context = get_context_data()
-            # Reenviamos la incidencia al contexto
+            # Reenviamos la incidencia original y los datos del POST para no perder los cambios
             context['incidencia'] = incidencia
+            context['form_data'] = request.POST
             return render(request, 'gestion/registrar_incidencia.html', context)
 
     else:  # Si es método GET, mostramos el formulario con los datos actuales
@@ -231,7 +351,7 @@ def eliminar_incidencia_view(request, pk):
 @no_cache
 def get_codigos_cierre_por_aplicacion(request, aplicacion_id):
     """
-    Vista que, dado un ID de aplicación, devuelve los códigos de cierre 
+    Vista que, dado un ID de aplicación, devuelve los códigos de cierre
     asociados en formato JSON.
     """
     try:
@@ -261,8 +381,9 @@ def normalize_text(text):
 def carga_masiva_incidencia_view(request):
     """
     Gestiona la carga masiva de incidencias.
-    (Versión con asignación de nuevos campos de texto y usuario).
+    (Versión que crea si no existe, o informa si ya existe sin actualizar).
     """
+    # ... (bloque try/except para las cachés sin cambios) ...
     try:
         # --- Creación de Cachés de Búsqueda ---
         aplicacion_cache = {normalize_text(
@@ -275,9 +396,10 @@ def carga_masiva_incidencia_view(request):
             c.desc_cluster): c for c in Cluster.objects.all()}
         bloque_cache = {normalize_text(
             b.desc_bloque): b for b in Bloque.objects.all()}
-        # CAMBIO: Se añade la caché para usuarios
         usuario_cache = {normalize_text(
-            u.nombre): u for u in Usuario.objects.all()}
+            u.usuario): u for u in Usuario.objects.all()}
+        grupo_resolutor_cache = {normalize_text(
+            g.desc_grupo_resol): g for g in GrupoResolutor.objects.all()}
 
         default_impacto = Impacto.objects.get(desc_impacto__iexact='interno')
         default_interfaz = Interfaz.objects.get(desc_interfaz__iexact='WEB')
@@ -294,10 +416,14 @@ def carga_masiva_incidencia_view(request):
                 request, 'Por favor, selecciona un archivo con formato .csv o .xlsx.')
             return redirect('gestion:carga_masiva_incidencia')
 
+        # <<<--- PASO 1: AJUSTAR CONTADORES ---<<<
         failed_rows = []
-        success_count = 0
+        new_incidents_count = 0
+        existing_skipped_count = 0  # <-- Nuevo contador
+        skipped_indra_d_count = 0
 
         try:
+            # ... (código de lectura de archivo sin cambios) ...
             if file.name.endswith('.csv'):
                 df = pd.read_csv(file, keep_default_na=False, dtype=str)
             else:
@@ -312,7 +438,7 @@ def carga_masiva_incidencia_view(request):
                         if not incidencia_id or not incidencia_id.upper().startswith('INC'):
                             continue
 
-                        # ... (lógica de aplicación y código de cierre sin cambios) ...
+                        # ... (Toda la lógica de asignación de objetos sin cambios) ...
                         aplicacion_obj = None
                         codigo_cierre_obj = None
                         app_val = row['aplicacion_id'].strip()
@@ -355,31 +481,42 @@ def carga_masiva_incidencia_view(request):
 
                         bloque_val = normalize_text(row['bloque_id'])
                         if bloque_val == 'indra_d':
+                            skipped_indra_d_count += 1
+                            logger.info(
+                                f"Omitiendo incidencia {incidencia_id} (fila {line_number}) por valor 'indra_d'.")
                             continue
+
                         bloque_obj = None
                         if bloque_val == 'indra_b3':
-                            bloque_obj = bloque_cache.get('bloque 3')
-                        elif bloque_val == 'indra':
-                            bloque_obj = bloque_cache.get('bloque 4')
+                            bloque_obj = bloque_cache.get(
+                                normalize_text('bloque 3'))
+                        elif bloque_val in ('indra', 'indra_a'):
+                            bloque_obj = bloque_cache.get(
+                                normalize_text('bloque 4'))
+
+                        grupo_resolutor_obj = None
+                        if bloque_val == 'indra_b3':
+                            grupo_resolutor_obj = grupo_resolutor_cache.get(
+                                normalize_text('SWF_INDRA_3B'))
+                        elif bloque_val in ('indra', 'indra_a'):
+                            grupo_resolutor_obj = grupo_resolutor_cache.get(
+                                normalize_text('SWF_INDRA_G3'))
 
                         impacto_obj = default_impacto
                         interfaz_obj = default_interfaz
-                        grupo_resolutor_obj = None
-
-                        # CAMBIO: Se busca el usuario en la caché
                         usuario_asignado_obj = usuario_cache.get(
                             normalize_text(row['usuario_asignado_id']))
-
                         workaround_val = 'Sí' if 'con wa' in row['workaround'].strip(
                         ).lower() else 'No'
 
-                        Incidencia.objects.update_or_create(
+                        # <<<--- PASO 2: CAMBIAR update_or_create POR get_or_create ---<<<
+                        obj, created = Incidencia.objects.get_or_create(
                             incidencia=incidencia_id,
                             defaults={
+                                # ... todos tus campos ...
                                 'descripcion_incidencia': row['descripcion_incidencia'].strip(),
-                                'fecha_apertura': datetime.strptime(row['fecha_apertura'].strip(), '%d-%m-%Y %H:%M:%S') if row['fecha_apertura'].strip() else None,
-                                'fecha_ultima_resolucion': datetime.strptime(row['fecha_ultima_resolucion'].strip(), '%d-%m-%Y %H:%M:%S') if row['fecha_ultima_resolucion'].strip() else None,
-                                # CAMBIO: Se asignan los campos de texto solicitados
+                                'fecha_apertura': timezone.make_aware(datetime.strptime(row['fecha_apertura'].strip(), '%d-%m-%Y %H:%M:%S')) if row['fecha_apertura'].strip() else None,
+                                'fecha_ultima_resolucion': timezone.make_aware(datetime.strptime(row['fecha_ultima_resolucion'].strip(), '%d-%m-%Y %H:%M:%S')) if row['fecha_ultima_resolucion'].strip() else None,
                                 'causa': row['causa'].strip(),
                                 'bitacora': row['bitacora'].strip(),
                                 'tec_analisis': row['tec_analisis'].strip(),
@@ -397,28 +534,37 @@ def carga_masiva_incidencia_view(request):
                                 'cluster': cluster_obj,
                                 'bloque': bloque_obj,
                                 'codigo_cierre': codigo_cierre_obj,
-                                # CAMBIO: Se asigna el usuario encontrado
                                 'usuario_asignado': usuario_asignado_obj,
                             }
                         )
-                        success_count += 1
 
-                    except ObjectDoesNotExist as e:
-                        failed_rows.append({'line': line_number, 'row_data': ', '.join(
-                            map(str, row.values)), 'error': f"No se encontró un registro coincidente: {e}"})
+                        # <<<--- PASO 3: AJUSTAR LÓGICA DE CONTADORES Y LOGGING ---<<<
+                        if created:
+                            new_incidents_count += 1
+                            logger.info(
+                                f"Incidencia {incidencia_id} CREADA con éxito.")
+                        else:
+                            existing_skipped_count += 1  # <-- Usar nuevo contador
+                            logger.info(
+                                f"Incidencia {incidencia_id} ya existe, se omite.")
+
                     except Exception as e:
+                        logger.error(
+                            f"Error procesando fila {line_number} (Incidencia: {incidencia_id}): {e}", exc_info=True)
                         failed_rows.append({'line': line_number, 'row_data': ', '.join(
                             map(str, row.values)), 'error': str(e)})
 
-            # ... (logging y mensajes sin cambios) ...
+            # <<<--- PASO 4: AJUSTAR RESUMEN FINAL ---<<<
             log_summary = f"""
             \n--------------------------------------------------
             \nRESUMEN DE CARGA MASIVA
             \nUsuario: {request.user}
             \nArchivo: {file.name}
             \n--------------------------------------------------
-            \nTotal de filas en el archivo: {len(df)}
-            \nIncidencias cargadas con éxito: {success_count}
+            \nTotal de filas leídas del archivo: {len(df)}
+            \nIncidencias nuevas creadas: {new_incidents_count}
+            \nIncidencias omitidas (por ya existir): {existing_skipped_count}
+            \nIncidencias omitidas (por 'indra_d'): {skipped_indra_d_count}
             \nIncidencias con errores: {len(failed_rows)}
             \n--------------------------------------------------
             """
@@ -428,16 +574,23 @@ def carga_masiva_incidencia_view(request):
                     incidencia_id_error = item.get(
                         'row_data', 'N/A').split(',')[0]
                     log_summary += f"  - Fila {item['line']} (Incidencia: {incidencia_id_error}): {item['error']}\n"
+                log_summary += "--------------------------------------------------\n"
 
-            log_summary += "--------------------------------------------------"
             logger.info(log_summary)
 
-            if success_count > 0:
+            if new_incidents_count > 0:
                 messages.success(
-                    request, f'¡Carga completada! Se procesaron {success_count} incidencias con éxito.')
+                    request, f'¡Carga completada! Se crearon {new_incidents_count} incidencias nuevas.')
+            if existing_skipped_count > 0:
+                messages.info(
+                    request, f'Se omitieron {existing_skipped_count} incidencias que ya existían.')
             if failed_rows:
                 messages.warning(
-                    request, f'Se encontraron {len(failed_rows)} errores. Por favor, revisa los detalles a continuación.')
+                    request, f'Se encontraron {len(failed_rows)} errores. Por favor, revisa los detalles.')
+            if skipped_indra_d_count > 0:
+                messages.info(
+                    request, f'Se omitieron {skipped_indra_d_count} incidencias con valor "indra_d".')
+
             return render(request, 'gestion/carga_masiva_incidencia.html', {'failed_rows': failed_rows})
 
         except Exception as e:

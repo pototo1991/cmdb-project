@@ -13,8 +13,9 @@
     <a href="{% url 'gestion:aplicaciones' %}" class="navbar-link">Mantenedor Aplicaciones</a>
 {% endblock extra_nav_buttons %}
 
+{% block main_class %}main-content-centered{% endblock %}
+
 {% block content %}
-<div class="main-content">
     <div class="page-header">
         <h1 class="page-title">
             {% if aplicacion %}Editar Aplicación{% else %}Registrar Nueva Aplicación{% endif %}
@@ -84,5 +85,4 @@
 
         </form>
     </div>
-</div>
 {% endblock content %}
