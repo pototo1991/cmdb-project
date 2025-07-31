@@ -106,6 +106,23 @@ def _timedelta_to_hms(td):
 
 
 def calcular_sla_desde_bitacora(incidencia, gestores_norm, horarios, feriados, reglas_sla):
+    # VALIDACIÓN DE PRIORIDAD 1: Excluir incidencias que no aplican para SLA.
+    # Esta validación se mueve al principio para que tenga la máxima prioridad.
+    # Bloque ID 5 = 'Sin bloque'
+    # Grupo Resolutor ID 15 = 'INDRA_D'
+    if incidencia.bloque_id == 5 or incidencia.grupo_resolutor_id == 15:
+        motivos = []
+        if incidencia.bloque_id == 5:
+            motivos.append("el bloque es 'Sin Bloque' (ID 5)")
+        if incidencia.grupo_resolutor_id == 15:
+            motivos.append("el grupo resolutor es 'INDRA_D' (ID 15)")
+
+        razon_log = " y ".join(motivos)
+        logger.info(
+            f"Cálculo de SLA para Incidencia ID {incidencia.id} ('{incidencia.incidencia}') omitido porque {razon_log}."
+        )
+        return {"cumple_sla": "No Aplica"}
+
     # El resto de esta función y las vistas no necesitan cambios, ya que
     # la modificación está contenida dentro de 'calcular_tiempo_efectivo'.
     campos_faltantes = []
