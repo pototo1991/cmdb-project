@@ -1,19 +1,21 @@
 # gestion/views/incidencias.py
 
 import csv
+import io
 import pandas as pd
 from datetime import datetime, timedelta
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import F
+from django.db.models import F, Q
 from django.utils import timezone
 from django.db import transaction
 from .utils import no_cache, logger
 from ..models import Aplicacion, Estado, Severidad, Impacto, GrupoResolutor, Interfaz, Cluster, Bloque, Incidencia, CodigoCierre, Usuario
 from django.core.exceptions import ObjectDoesNotExist
 from unidecode import unidecode
+from openpyxl.utils import get_column_letter
 
 
 @login_required
@@ -601,3 +603,116 @@ def carga_masiva_incidencia_view(request):
             return redirect('gestion:carga_masiva_incidencia')
 
     return render(request, 'gestion/carga_masiva_incidencia.html')
+
+
+# VISTA NUEVA PARA EXPORTAR EL REPORTE EN FORMATO XLSX
+@login_required
+@no_cache
+def exportar_incidencias_reporte_view(request):
+    """
+    Genera y exporta un reporte de incidencias en formato .xlsx,
+    respetando los filtros aplicados en la vista principal.
+    """
+    logger.info(
+        f"Usuario '{request.user}' ha solicitado un reporte de incidencias en Excel.")
+
+    # 1. Queryset base optimizado (igual que en incidencias_view)
+    incidencias_qs = Incidencia.objects.select_related(
+        'aplicacion', 'estado', 'severidad', 'impacto', 'bloque',
+        'codigo_cierre', 'grupo_resolutor'
+    ).all()
+
+    # 2. Replicar la lógica de filtrado de incidencias_view
+    # Esto es crucial para que el reporte coincida con la tabla visible
+    filtro_app_id = request.GET.get('aplicativo')
+    filtro_bloque_id = request.GET.get('bloque')
+    filtro_incidencia = request.GET.get('incidencia')
+    filtro_codigo_id = request.GET.get('codigo_cierre')
+    filtro_fecha_desde = request.GET.get('fecha_desde')
+    filtro_fecha_hasta = request.GET.get('fecha_hasta')
+
+    if filtro_app_id and filtro_app_id.isdigit():
+        incidencias_qs = incidencias_qs.filter(aplicacion_id=filtro_app_id)
+    if filtro_bloque_id and filtro_bloque_id.isdigit():
+        incidencias_qs = incidencias_qs.filter(bloque_id=filtro_bloque_id)
+    if filtro_incidencia:
+        incidencias_qs = incidencias_qs.filter(
+            incidencia__icontains=filtro_incidencia)
+    if filtro_codigo_id and filtro_codigo_id.isdigit():
+        incidencias_qs = incidencias_qs.filter(
+            codigo_cierre_id=filtro_codigo_id)
+    if filtro_fecha_desde:
+        try:
+            fecha_obj = datetime.strptime(filtro_fecha_desde, '%Y-%m-%d')
+            incidencias_qs = incidencias_qs.filter(
+                fecha_ultima_resolucion__gte=timezone.make_aware(fecha_obj))
+        except (ValueError, TypeError):
+            pass
+    if filtro_fecha_hasta:
+        try:
+            fecha_obj = datetime.strptime(filtro_fecha_hasta, '%Y-%m-%d')
+            fecha_obj_fin_dia = fecha_obj + timedelta(days=1)
+            incidencias_qs = incidencias_qs.filter(
+                fecha_ultima_resolucion__lt=timezone.make_aware(fecha_obj_fin_dia))
+        except (ValueError, TypeError):
+            pass
+
+    # 3. Preparar los datos para el DataFrame de Pandas
+    meses_es = {
+        1: 'enero', 2: 'febrero', 3: 'marzo', 4: 'abril', 5: 'mayo', 6: 'junio',
+        7: 'julio', 8: 'agosto', 9: 'septiembre', 10: 'octubre', 11: 'noviembre', 12: 'diciembre'
+    }
+
+    data_para_excel = []
+    for inc in incidencias_qs:
+        mes_resolucion = ""
+        fecha_resolucion_str = ""
+        if inc.fecha_ultima_resolucion:
+            # Hacemos la fecha consciente a la zona horaria local para extraer el mes correcto
+            fecha_local = timezone.localtime(inc.fecha_ultima_resolucion)
+            mes_resolucion = meses_es.get(fecha_local.month, '')
+            fecha_resolucion_str = fecha_local.strftime('%d-%m-%Y %H:%M')
+
+        data_para_excel.append({
+            'ID de la Incidencia': inc.incidencia,
+            'Criticidad aplicativo': inc.aplicacion.criticidad.desc_criticidad if inc.aplicacion and inc.aplicacion.criticidad else 'N/A',
+            'severidad incidencia': inc.severidad.desc_severidad if inc.severidad else 'N/A',
+            'Grupo resolutor': inc.grupo_resolutor.desc_grupo_resol if inc.grupo_resolutor else 'N/A',
+            'Aplicativo': inc.aplicacion.nombre_aplicacion if inc.aplicacion else 'N/A',
+            'Fecha de Resolucion': fecha_resolucion_str,
+            'mes': mes_resolucion,
+            'cod_cierre': inc.codigo_cierre.cod_cierre if inc.codigo_cierre else 'N/A',
+            'Descripción Cierre': inc.codigo_cierre.desc_cod_cierre if inc.codigo_cierre else 'N/A',
+            'Bloque': inc.bloque.desc_bloque if inc.bloque else 'N/A'
+        })
+
+    # 4. Crear el archivo Excel en memoria usando Pandas
+    df = pd.DataFrame(data_para_excel)
+    output = io.BytesIO()
+
+    # Escribir el DataFrame al buffer de BytesIO como un archivo Excel
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Reporte Incidencias')
+        worksheet = writer.sheets['Reporte Incidencias']
+        # Opcional: Auto-ajustar el ancho de las columnas
+        for column in df:
+            column_length = max(df[column].astype(
+                str).map(len).max(), len(column))
+            col_idx = df.columns.get_loc(column)
+            worksheet.column_dimensions[get_column_letter(
+                col_idx + 1)].width = column_length + 2
+
+    output.seek(0)  # Mover el cursor al inicio del stream
+
+    # 5. Crear la respuesta HTTP para descargar el archivo
+    filename = f"Reporte_Incidencias_{datetime.now().strftime('%Y-%m-%d')}.xlsx"
+    response = HttpResponse(
+        output,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    # Se establece una cookie para que el frontend pueda ocultar el spinner
+    response.set_cookie('descargaFinalizada', 'true', max_age=20, path='/')
+
+    return response

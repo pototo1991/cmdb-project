@@ -141,30 +141,33 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'standard': {
-            'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
+        'verbose': {
+            'format': '{levelname} {asctime} {name}: {message}',
+            'style': '{',
         },
     },
     'handlers': {
         'file': {
             'level': 'INFO',
-            'formatter': 'standard',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': BASE_DIR / 'logs.log',  # Path to your log file
+            # ¡Este es el cambio clave! Usamos el handler concurrente.
+            'class': 'concurrent_log_handler.ConcurrentRotatingFileHandler',
+            'filename': BASE_DIR / 'logs.log',
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 3,  # Keep 3 old log files
+            'backupCount': 5,
+            'formatter': 'verbose',
         },
         'console': {
-            'level': 'INFO',
-            'formatter': 'standard',
+            'level': 'DEBUG',  # Mostramos más detalle en la consola de desarrollo
             'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
         },
     },
     'loggers': {
-        '': {  # Root logger - logs from all apps
+        # Configuramos un logger específico para tu app 'gestion'
+        'gestion': {
             'handlers': ['file', 'console'],
             'level': 'INFO',
-            'propagate': True,
+            'propagate': False,  # Evita que el log se propague a loggers padres
         },
     },
 }

@@ -6,9 +6,9 @@
 {% block extra_css %}<link rel="stylesheet" href="{% static 'gestion/css/listado_tablas.css' %}">{% endblock %}
 
 {% block extra_nav_buttons %}
-    <a href="{% url 'gestion:incidencias' %}" class="navbar-link">Listado Incidencias</a>
-    <a href="{% url 'gestion:codigos_cierre' %}" class="navbar-link">Mantenedor Códigos de Cierre</a>
-    <a href="{% url 'gestion:aplicaciones' %}" class="navbar-link">Mantenedor Aplicaciones</a>
+    <a href="{% url 'gestion:incidencias' %}" class="navbar-link link-con-spinner">Listado Incidencias</a>
+    <a href="{% url 'gestion:codigos_cierre' %}" class="navbar-link link-con-spinner">Mantenedor Códigos de Cierre</a>
+    <a href="{% url 'gestion:aplicaciones' %}" class="navbar-link link-con-spinner">Mantenedor Aplicaciones</a>
 {% endblock extra_nav_buttons %}
 
 {% block content %}

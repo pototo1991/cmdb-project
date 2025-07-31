@@ -1,0 +1,265 @@
+{% extends 'gestion/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard de Gráficos - CMDB{% endblock %}
+
+{% block extra_css %}
+    {# Reutilizamos los estilos que ya tienes para mantener la consistencia #}
+    <link rel="stylesheet" href="{% static 'gestion/css/listado_tablas.css' %}">
+    <link rel="stylesheet" href="{% static 'gestion/css/incidencia.css' %}">
+    <link rel="stylesheet" href="{% static 'gestion/css/graficos.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <h1 class="page-title">Dashboard de Gráficos</h1>
+
+    {# Estructura de filtros #}
+    <form id="graficos-filters-form" method="get" action="">
+        <div class="filter-box">
+            <div class="filter-header">
+                <h3>Filtros de Búsqueda</h3>
+            </div>
+            <div id="filter-container" style="display: block;">
+                <div class="filter-grid">
+                    <div class="filter-group">
+                        <label for="aplicativo">Aplicativo:</label>
+                        <select id="aplicativo" name="aplicativo">
+                            <option value="">Todos</option>
+                            {% for app in aplicaciones %}
+                                <option value="{{ app.id }}">{{ app.nombre_aplicacion }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="bloque">Bloque:</label>
+                        <select id="bloque" name="bloque">
+                            <option value="">Todos</option>
+                            {% for bloque in bloques %}
+                                <option value="{{ bloque.id }}">{{ bloque.desc_bloque }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="codigo_cierre">Código de Cierre:</label>
+                        <select id="codigo_cierre" name="codigo_cierre">
+                            <option value="">Todos</option>
+                            {% for codigo in codigos_cierre %}
+                                <option value="{{ codigo.id }}">{{ codigo.cod_cierre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="severidad">Severidad:</label>
+                        <select id="severidad" name="severidad">
+                            <option value="">Todas</option>
+                            {% for sev in severidades %}
+                                <option value="{{ sev.id }}">{{ sev.desc_severidad }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="usuario">Usuario Asignado:</label>
+                        <select id="usuario" name="usuario">
+                            <option value="">Todos</option>
+                            {% for usuario in usuarios %}
+                                <option value="{{ usuario.id }}">{{ usuario.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="year">Año:</label>
+                        <select id="year" name="year">
+                            <option value="">Todos</option>
+                            {% for y in years %}
+                                <option value="{{ y.year }}">{{ y.year }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="month">Mes:</label>
+                        <select id="month" name="month">
+                            <option value="">Todos</option>
+                            {% for m in months %}
+                                <option value="{{ m.value }}">{{ m.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="fecha_desde">Fecha Cierre (Desde):</label>
+                        <input type="date" id="fecha_desde" name="fecha_desde">
+                    </div>
+                    <div class="filter-group">
+                        <label for="fecha_hasta">Fecha Cierre (Hasta):</label>
+                        <input type="date" id="fecha_hasta" name="fecha_hasta">
+                    </div>
+                </div>
+                <div class="filter-actions">
+                    <button type="submit" class="btn filter-btn">Actualizar Gráficos</button>
+                    <button type="button" id="limpiar-filtros-btn" class="btn filter-btn">Limpiar Filtros</button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    {# Contenedor para las viñetas/tarjetas de estadísticas #}
+    <div class="stats-container">
+        <div class="stat-card">
+            <h4>Total de Incidencias</h4>
+            {# El valor se llenará con JavaScript #}
+            <p id="total-incidencias-valor" class="stat-value">0</p>
+        </div>
+        {# Aquí podrías agregar más tarjetas en el futuro #}
+    </div>
+
+    {# Contenedores para los gráficos #}
+    <div class="dashboard-container">
+        <div class="chart-card">
+            <div class="chart-container">
+                <canvas id="chartPorAplicativo"></canvas>
+            </div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-container">
+                <canvas id="chartPorMes"></canvas>
+            </div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-container">
+                <canvas id="chartPorSeveridad"></canvas>
+            </div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-container">
+                <canvas id="chartPorCodigoCierre"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_scripts %}
+<script>
+$(document).ready(function() {
+    let chartAplicativo = null;
+    let chartPorMes = null;
+    let chartSeveridad = null;
+    let chartPorCodigoCierre = null;
+
+    function renderChart(canvasId, chartInstance, chartData, chartTitle, datasetLabel, chartType = 'bar') {
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        if (chartInstance) {
+            chartInstance.destroy();
+        }
+        
+        const isPieOrDoughnut = ['pie', 'doughnut'].includes(chartType);
+        const isLineOrBar = ['line', 'bar'].includes(chartType);
+
+        return new Chart(ctx, {
+            type: chartType,
+            data: {
+                labels: chartData.labels,
+                datasets: [{
+                    label: datasetLabel,
+                    data: chartData.values,
+                    backgroundColor: isPieOrDoughnut 
+                        ? ['#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'] 
+                        : (chartType === 'line' ? 'rgba(75, 192, 192, 0.2)' : 'rgba(54, 162, 235, 0.6)'),
+                    borderColor: isPieOrDoughnut 
+                        ? '#fff' 
+                        : (chartType === 'line' ? 'rgba(75, 192, 192, 1)' : 'rgba(54, 162, 235, 1)'),
+                    borderWidth: 1,
+                    fill: chartType === 'line', // Rellenar el área bajo la línea
+                    tension: 0.1 // Suavizar la línea
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: isLineOrBar ? { y: { beginAtZero: true, ticks: { precision: 0 } } } : {},
+                plugins: {
+                    title: {
+                        display: true,
+                        text: chartTitle,
+                        font: {
+                            size: 18
+                        },
+                        padding: {
+                            bottom: 20
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function actualizarGraficos() {
+        const form = $('#graficos-filters-form');
+        const url = `{% url 'gestion:graficos_data_json' %}?${form.serialize()}`;
+        
+        $('#loading-spinner').show();
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                // Actualizar la viñeta con el total de incidencias
+                $('#total-incidencias-valor').text(data.total_incidencias.toLocaleString('es-ES'));
+
+                chartAplicativo = renderChart('chartPorAplicativo', chartAplicativo, data.por_aplicativo, 'Incidencias por Aplicativo (Top 15)', 'Nº de Incidencias', 'bar');
+                chartPorMes = renderChart('chartPorMes', chartPorMes, data.por_mes, 'Incidencias por Mes', 'Nº de Incidencias', 'line');
+                chartSeveridad = renderChart('chartPorSeveridad', chartSeveridad, data.por_severidad, 'Incidencias por Severidad', 'Nº de Incidencias', 'pie');
+                chartPorCodigoCierre = renderChart('chartPorCodigoCierre', chartPorCodigoCierre, data.por_codigo_cierre, 'Top 15 Códigos de Cierre', 'Nº de Incidencias', 'bar');
+                $('#loading-spinner').hide();
+            })
+            .catch(error => {
+                console.error('Error al cargar datos de los gráficos:', error);
+                $('#loading-spinner').hide();
+                alert('No se pudieron cargar los datos para los gráficos.');
+            });
+    }
+
+    $('#graficos-filters-form').on('submit', function(e) {
+        e.preventDefault();
+        actualizarGraficos();
+    });
+
+    $('#limpiar-filtros-btn').on('click', function() {
+        $('#graficos-filters-form')[0].reset();
+        actualizarGraficos();
+    });
+
+    // Carga inicial de los gráficos
+    actualizarGraficos();
+
+    // --- INICIO: LÓGICA PARA FILTROS DEPENDIENTES ---
+    $('#aplicativo').on('change', function() {
+        const aplicativoId = $(this).val();
+        const codigoCierreSelect = $('#codigo_cierre');
+        const url = `{% url 'gestion:get_codigos_cierre_graficos' %}?aplicativo_id=${aplicativoId}`;
+
+        // Mostrar un estado de carga en el select de códigos de cierre
+        codigoCierreSelect.html('<option value="">Cargando...</option>').prop('disabled', true);
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                // Limpiar el select y habilitarlo
+                codigoCierreSelect.html('').prop('disabled', false);
+                
+                // Añadir la opción "Todos"
+                codigoCierreSelect.append('<option value="">Todos</option>');
+
+                // Poblar con los nuevos códigos de cierre
+                data.codigos.forEach(function(codigo) {
+                    codigoCierreSelect.append($('<option></option>').val(codigo.id).text(codigo.text));
+                });
+            })
+            .catch(error => {
+                console.error('Error al cargar los códigos de cierre:', error);
+                codigoCierreSelect.html('<option value="">Error al cargar</option>').prop('disabled', true);
+            });
+    });
+    // --- FIN: LÓGICA PARA FILTROS DEPENDIENTES ---
+});
+</script>
+{% endblock extra_scripts %}

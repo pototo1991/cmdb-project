@@ -8,9 +8,9 @@
 {% block extra_css %}<link rel="stylesheet" href="{% static 'gestion/css/registrar_aplicacion.css' %}">{% endblock %}
 
 {% block extra_nav_buttons %}
-    <a href="{% url 'gestion:incidencias' %}" class="navbar-link">Listado Incidencias</a>
-    <a href="{% url 'gestion:codigos_cierre' %}" class="navbar-link">Mantenedor Códigos de Cierre</a>
-    <a href="{% url 'gestion:aplicaciones' %}" class="navbar-link">Mantenedor Aplicaciones</a>
+    <a href="{% url 'gestion:incidencias' %}" class="navbar-link link-con-spinner">Listado Incidencias</a>
+    <a href="{% url 'gestion:codigos_cierre' %}" class="navbar-link link-con-spinner">Mantenedor Códigos de Cierre</a>
+    <a href="{% url 'gestion:aplicaciones' %}" class="navbar-link link-con-spinner">Mantenedor Aplicaciones</a>
 {% endblock extra_nav_buttons %}
 
 {% block main_class %}main-content-centered{% endblock %}
@@ -78,9 +78,9 @@
                     {% if aplicacion %}Actualizar Aplicación{% else %}Guardar Aplicación{% endif %}
                 </button>
                 {% if not aplicacion %}
-                <a href="{% url 'gestion:carga_masiva_aplicaciones' %}" class="btn btn-secondary">Carga Masiva</a>
+                <a href="{% url 'gestion:carga_masiva_aplicaciones' %}" class="btn btn-secondary link-con-spinner">Carga Masiva</a>
                 {% endif %}
-                <a href="{% url 'gestion:aplicaciones' %}" class="btn btn-secondary">Cancelar</a>
+                <a href="{% url 'gestion:aplicaciones' %}" class="btn btn-secondary link-con-spinner">Cancelar</a>
             </div>
 
         </form>

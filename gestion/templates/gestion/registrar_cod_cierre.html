@@ -12,9 +12,9 @@
 {% block extra_css %}<link rel="stylesheet" href="{% static 'gestion/css/registrar_cod_cierre.css' %}">{% endblock %}
 
 {% block extra_nav_buttons %}
-    <a href="{% url 'gestion:incidencias' %}" class="navbar-link">Listado Incidencias</a>
-    <a href="{% url 'gestion:codigos_cierre' %}" class="navbar-link">Mantenedor Códigos de Cierre</a>
-    <a href="{% url 'gestion:aplicaciones' %}" class="navbar-link">Mantenedor Aplicaciones</a>
+    <a href="{% url 'gestion:incidencias' %}" class="navbar-link link-con-spinner">Listado Incidencias</a>
+    <a href="{% url 'gestion:codigos_cierre' %}" class="navbar-link link-con-spinner">Mantenedor Códigos de Cierre</a>
+    <a href="{% url 'gestion:aplicaciones' %}" class="navbar-link link-con-spinner">Mantenedor Aplicaciones</a>
 {% endblock extra_nav_buttons %}
 
 {% block main_class %}main-content-centered{% endblock %}
@@ -73,9 +73,9 @@
             <div class="form-actions" style="justify-content: center; margin-top: 20px;">
                 <button type="submit" class="btn btn-primary">Guardar</button>
                 {% if not codigo_cierre %}
-                <a href="{% url 'gestion:carga_masiva_cod_cierre' %}" class="btn btn-secondary">Carga Masiva</a>
+                <a href="{% url 'gestion:carga_masiva_cod_cierre' %}" class="btn btn-secondary link-con-spinner">Carga Masiva</a>
                 {% endif %}
-                <a href="{% url 'gestion:codigos_cierre' %}" class="btn btn-secondary">Cancelar</a>
+                <a href="{% url 'gestion:codigos_cierre' %}" class="btn btn-secondary link-con-spinner">Cancelar</a>
             </div>
 
         </form>

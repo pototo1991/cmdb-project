@@ -16,13 +16,23 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 <body>
+    {# === INICIO DEL SPINNER DE CARGA === #}
+    <div class="spinner-overlay" id="loading-spinner">
+        <div class="spinner-cargando">
+            <div class="pelota"></div>
+            <div class="pelota"></div>
+            <div class="pelota"></div>
+        </div>
+        <span class="spinner-texto">Cargando...</span>
+    </div>
+    {# === FIN DEL SPINNER DE CARGA === #}
 
     {% block navbar %}
         <div class="navbar">
             <a href="{% url 'gestion:dashboard' %}" class="navbar-brand">CMDB Incidencias</a>
             <div class="navbar-links">
                 {% if user.is_superuser %}
-                <a href="{% url 'gestion:view_logs' %}" class="navbar-link">Ver Logs</a>
+                <a href="{% url 'gestion:view_logs' %}" class="navbar-link link-con-spinner">Ver Logs</a>
                 {% endif %}
 
                 {% block extra_nav_buttons %}{% endblock extra_nav_buttons %}
@@ -61,6 +71,7 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <script src="{% static 'gestion/js/script.js' %}"></script>
     

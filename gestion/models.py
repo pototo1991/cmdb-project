@@ -111,12 +111,12 @@ class Incidencia(models.Model):
 
     demandas = models.TextField(blank=True)
 
-    WORKAROUND_CHOICES = [
-        ('No', 'No'),
-        ('Sí', 'Sí'),
-    ]
+    class Workaround(models.TextChoices):
+        NO = 'No', 'No'
+        SI = 'Sí', 'Sí'
+
     workaround = models.CharField(
-        max_length=2, choices=WORKAROUND_CHOICES, default='No')
+        max_length=2, choices=Workaround.choices, default=Workaround.NO)
 
     # Relaciones (ForeignKey)
     aplicacion = models.ForeignKey(
@@ -161,6 +161,20 @@ class Incidencia(models.Model):
     usuario_asignado = models.ForeignKey(
         'Usuario', on_delete=models.SET_NULL, null=True, blank=True, related_name='incidencias_asignadas'
     )
+    cumple_sla = models.CharField(
+        max_length=20,
+        choices=[('Sí', 'Sí'), ('No', 'No'), ('N/A', 'No Aplica')],
+        default='N/A',
+        blank=True,
+        null=True,
+        verbose_name="Cumple SLA"
+    )
+    tiempo_sla_calculado = models.DurationField(
+        blank=True,
+        null=True,
+        help_text="Tiempo de gestión laboral calculado para el SLA.",
+        verbose_name="Tiempo de Gestión (SLA)"
+    )
 
     def __str__(self):
         return self.incidencia
@@ -179,3 +193,58 @@ class Usuario(models.Model):
 
     def __str__(self):
         return self.usuario
+
+
+class ReglaSLA(models.Model):
+    # Relaciones para la combinación
+    severidad = models.ForeignKey(Severidad, on_delete=models.CASCADE)
+    criticidad_aplicacion = models.ForeignKey(
+        Criticidad, on_delete=models.CASCADE)
+
+    # El tiempo de SLA
+    tiempo_sla = models.DurationField(
+        help_text="Tiempo máximo de resolución en formato DD HH:MM:SS"
+    )
+
+    def __str__(self):
+        return f"SLA para {self.severidad} en App {self.criticidad_aplicacion}: {self.tiempo_sla}"
+
+    class Meta:
+        # Asegura que no haya reglas duplicadas para la misma combinación
+        unique_together = ('severidad', 'criticidad_aplicacion')
+        verbose_name = "Regla de SLA"
+        verbose_name_plural = "Reglas de SLA"
+
+
+class HorarioLaboral(models.Model):
+    DIA_CHOICES = [
+        (0, 'LUNES'), (1, 'MARTES'), (2, 'MIÉRCOLES'),
+        (3, 'JUEVES'), (4, 'VIERNES'), (5, 'SÁBADO'), (6, 'DOMINGO')
+    ]
+    dia_semana = models.IntegerField(choices=DIA_CHOICES, unique=True)
+    hora_inicio = models.TimeField(
+        null=True, blank=True, help_text="Dejar en blanco si es un día no laboral (CERRADO)")
+    hora_fin = models.TimeField(null=True, blank=True)
+
+    def __str__(self):
+        if self.hora_inicio and self.hora_fin:
+            return f"{self.get_dia_semana_display()}: {self.hora_inicio.strftime('%H:%M')} - {self.hora_fin.strftime('%H:%M')}"
+        return f"{self.get_dia_semana_display()}: CERRADO"
+
+    class Meta:
+        ordering = ['dia_semana']
+        verbose_name = "Horario Laboral"
+        verbose_name_plural = "Horarios Laborales"
+
+
+class DiaFeriado(models.Model):
+    fecha = models.DateField(unique=True, help_text="Fecha del día feriado.")
+    descripcion = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f"{self.fecha.strftime('%Y-%m-%d')} - {self.descripcion}"
+
+    class Meta:
+        ordering = ['fecha']
+        verbose_name = "Día Feriado"
+        verbose_name_plural = "Días Feriados"

@@ -1,0 +1,68 @@
+.dashboard-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    padding-top: 20px;
+}
+
+.chart-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    width: 100%;
+    max-width: 600px;
+    /* Ancho máximo para cada gráfico */
+}
+
+.chart-container {
+    position: relative;
+    height: 40vh;
+    /* Altura del contenedor del gráfico */
+}
+
+.stats-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 25px;
+    padding: 0 20px;
+}
+
+.stat-card {
+    background-color: #0056b3;
+    /* Un color azul oscuro para destacar */
+    color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    padding: 20px 30px;
+    text-align: center;
+    min-width: 220px;
+}
+
+.stat-card h4 {
+    margin: 0 0 10px 0;
+    font-weight: 400;
+}
+
+.stat-card .stat-value {
+    margin: 0;
+    font-size: 2.5em;
+    font-weight: 700;
+}
+
+
+/* --- ESTILOS PARA AJUSTAR EL TAMAÑO DE LOS FILTROS --- */
+
+.filter-grid {
+    /* Hacemos las columnas de los filtros un poco más angostas. */
+    /* Puedes ajustar el valor '240px' a uno menor si los quieres aún más pequeños. */
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+
+.filter-group select,
+.filter-group input[type="date"] {
+    font-size: 0.9rem;
+    /* Reducimos un poco el tamaño de la fuente para un look más compacto */
+}

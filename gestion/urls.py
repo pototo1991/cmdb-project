@@ -49,5 +49,17 @@ urlpatterns = [
     path('incidencias/carga-masiva/', views.carga_masiva_incidencia_view,
          name='carga_masiva_incidencia'),
 
+    path('incidencias/calcular-sla/',
+         views.calculo_sla.calcular_sla_view, name='calcular_sla'),
+    path('incidencias/exportar-sla-csv/',
+         views.exportar_sla_csv_view, name='exportar_sla_csv'),
+    path('incidencias/exportar-reporte/', views.exportar_incidencias_reporte_view,
+         name='exportar_incidencias_reporte'),
+
+    # Nuevas rutas para la página de gráficos y su endpoint de datos
+    path('graficos/', views.graficos_view, name='graficos'),
+    path('graficos/data/', views.graficos_data_json, name='graficos_data_json'),
+    path('ajax/get-codigos-cierre-graficos/',
+         views.get_codigos_cierre_ajax, name='get_codigos_cierre_graficos'),
 
 ]
