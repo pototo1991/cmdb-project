@@ -105,11 +105,13 @@
     {# Contenedor para las viñetas/tarjetas de estadísticas #}
     <div class="stats-container">
         <div class="stat-card">
-            <h4>Total de Incidencias</h4>
-            {# El valor se llenará con JavaScript #}
-            <p id="total-incidencias-valor" class="stat-value">0</p>
+            <h4>Total Incidencias (BD)</h4>
+            <p id="total-general-valor" class="stat-value">0</p>
         </div>
-        {# Aquí podrías agregar más tarjetas en el futuro #}
+        <div class="stat-card stat-card-filtered">
+            <h4>Incidencias Filtradas</h4>
+            <p id="total-filtrado-valor" class="stat-value">0</p>
+        </div>
     </div>
 
     {# Contenedores para los gráficos #}
@@ -202,11 +204,12 @@ $(document).ready(function() {
         fetch(url)
             .then(response => response.json())
             .then(data => {
-                // Actualizar la viñeta con el total de incidencias
-                $('#total-incidencias-valor').text(data.total_incidencias.toLocaleString('es-ES'));
+                // Actualizar las viñetas con los totales
+                $('#total-general-valor').text(data.total_general.toLocaleString('es-ES'));
+                $('#total-filtrado-valor').text(data.total_filtrado.toLocaleString('es-ES'));
 
                 chartAplicativo = renderChart('chartPorAplicativo', chartAplicativo, data.por_aplicativo, 'Incidencias por Aplicativo (Top 15)', 'Nº de Incidencias', 'bar');
-                chartPorMes = renderChart('chartPorMes', chartPorMes, data.por_mes, 'Incidencias por Mes', 'Nº de Incidencias', 'line');
+                chartPorMes = renderChart('chartPorMes', chartPorMes, data.por_mes, 'Incidencias por Mes', 'Nº de Incidencias', 'doughnut');
                 chartSeveridad = renderChart('chartPorSeveridad', chartSeveridad, data.por_severidad, 'Incidencias por Severidad', 'Nº de Incidencias', 'pie');
                 chartPorCodigoCierre = renderChart('chartPorCodigoCierre', chartPorCodigoCierre, data.por_codigo_cierre, 'Top 15 Códigos de Cierre', 'Nº de Incidencias', 'bar');
                 $('#loading-spinner').hide();

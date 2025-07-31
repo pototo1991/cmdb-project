@@ -36,20 +36,26 @@
     color: #fff;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    padding: 20px 30px;
+    padding: 10px 15px;
     text-align: center;
-    min-width: 220px;
+    min-width: 190px;
 }
 
 .stat-card h4 {
     margin: 0 0 10px 0;
     font-weight: 400;
+    font-size: 0.8rem;
 }
 
 .stat-card .stat-value {
     margin: 0;
-    font-size: 2.5em;
+    font-size: 2.0em;
     font-weight: 700;
+}
+
+.stat-card-filtered {
+    background-color: #007bff;
+    /* Un azul un poco más claro para diferenciar */
 }
 
 
@@ -58,11 +64,13 @@
 .filter-grid {
     /* Hacemos las columnas de los filtros un poco más angostas. */
     /* Puedes ajustar el valor '240px' a uno menor si los quieres aún más pequeños. */
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
 }
 
 .filter-group select,
 .filter-group input[type="date"] {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     /* Reducimos un poco el tamaño de la fuente para un look más compacto */
+    padding: 8px;
+    /* Reducimos el relleno para hacerlos más bajos */
 }

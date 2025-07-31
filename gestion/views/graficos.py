@@ -81,10 +81,14 @@ def graficos_data_json(request):
     """
     Devuelve los datos agregados para los gráficos en formato JSON.
     """
+    # Total de incidencias en la base de datos, sin filtros.
+    total_general_incidencias = Incidencia.objects.count()
+
+    # Queryset con los filtros aplicados
     incidencias_filtradas = get_filtered_incidencias(request)
 
-    # Calculamos el total de incidencias filtradas
-    total_incidencias = incidencias_filtradas.count()
+    # Total de incidencias que coinciden con los filtros
+    total_filtrado_incidencias = incidencias_filtradas.count()
 
     # Gráfico 1: Incidencias por Aplicativo
     data_aplicativo = (
@@ -126,7 +130,8 @@ def graficos_data_json(request):
     }
 
     chart_data = {
-        'total_incidencias': total_incidencias,
+        'total_general': total_general_incidencias,
+        'total_filtrado': total_filtrado_incidencias,
         'por_aplicativo': {'labels': [item['aplicacion__nombre_aplicacion'] or "No Asignado" for item in data_aplicativo], 'values': [item['total'] for item in data_aplicativo]},
         'por_mes': {
             'labels': [f"{meses_es.get(item['mes'].month, '')} {item['mes'].year}" for item in data_por_mes if item['mes']],

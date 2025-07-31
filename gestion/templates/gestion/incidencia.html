@@ -298,6 +298,9 @@ $(document).ready(function() {
             return;
         }
 
+        // Muestra el spinner antes de iniciar la petición, asegurando que sea un contenedor flex
+        $('#loading-spinner').css('display', 'flex');
+
         // Obtener el token CSRF para la petición POST segura
         function getCookie(name) {
             let cookieValue = null;
@@ -340,10 +343,14 @@ $(document).ready(function() {
             } else {
                 alert('Error: ' + data.message);
             }
+            // Oculta el spinner cuando la operación ha terminado (éxito o error manejado)
+            $('#loading-spinner').hide();
         })
         .catch(error => {
             console.error('Error en la petición AJAX:', error);
             alert('Ocurrió un error de comunicación con el servidor.');
+            // Asegúrate de ocultar el spinner también en caso de un error de red
+            $('#loading-spinner').hide();
         });
     });
     // --- CÓDIGO NUEVO PARA EXPORTAR CSV ---
@@ -397,11 +404,6 @@ $(document).ready(function() {
         window.location.href = url.href;
     });
 
-
-    // --- CÓDIGO para Exportar CSV (ya lo tenías, lo dejo por contexto) ---
-    $('#btn-exportar-csv').on('click', function() {
-        // ... tu código existente para el CSV ...
-    });
 });
 </script>
 {% endblock extra_scripts %}

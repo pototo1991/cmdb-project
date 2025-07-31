@@ -363,6 +363,13 @@ body {
 }
 
 
+/* Cuando el spinner está activo, lo mostramos como un contenedor flex */
+
+.spinner-overlay.is-active {
+    display: flex;
+}
+
+
 /* Contenedor de las pelotas animadas */
 
 .spinner-cargando {
