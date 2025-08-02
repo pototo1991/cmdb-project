@@ -1,10 +1,17 @@
+<!-- gestion\templates\gestion -->
+
 {% extends 'gestion/base.html' %}
 {% load static %}
 
 {% block title %}Mantenedor de Aplicaciones - CMDB{% endblock %}
 
-{% block extra_css %}<link rel="stylesheet" href="{% static 'gestion/css/listado_tablas.css' %}">{% endblock %}
+{# Solo se necesita el CSS consolidado #}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'gestion/css/aplicaciones.css' %}">
+{% endblock %}
 
+{# --- NAVBAR RESTAURADO --- #}
+{# Este bloque inserta los botones específicos en la barra de navegación de base.html #}
 {% block extra_nav_buttons %}
     <a href="{% url 'gestion:incidencias' %}" class="navbar-link link-con-spinner">Listado Incidencias</a>
     <a href="{% url 'gestion:codigos_cierre' %}" class="navbar-link link-con-spinner">Mantenedor Códigos de Cierre</a>
@@ -12,93 +19,112 @@
 {% endblock extra_nav_buttons %}
 
 {% block content %}
-    <div class="page-header">
-        <h1 class="page-title">Listado de Aplicaciones</h1>
-        <a href="{% url 'gestion:registrar_aplicacion' %}" class="btn btn-primary">Registrar Aplicación</a>
-    </div>
+    <h1 class="page-title">Listado de Aplicaciones</h1>
 
-    <div class="table-container">
-        <table id="tabla-aplicaciones" class="data-table">
-            <thead>
-                <tr>
-                    <th>Eliminar</th>
-                    <th>Editar</th>
-                    <th>Código</th>
-                    <th>Nombre</th>
-                    <th>Bloque</th>
-                    <th>Criticidad</th>
-                    <th>Estado</th>
-                    <th>Descripción</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for app in lista_de_aplicaciones %}
-                <tr>
-                    <td class="text-center">
-                        <form action="{% url 'gestion:eliminar_aplicacion' app.id %}" method="post" onsubmit="return confirm('¿Estás seguro de que deseas eliminar esta aplicación?');" style="display: inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="btn-icon btn-delete" title="Eliminar">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </form>
-                    </td>
-                    <td class="text-center">
-                        <a href="{% url 'gestion:editar_aplicacion' app.id %}" class="btn-icon btn-edit" title="Editar">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                    </td>
-                    <td>{{ app.cod_aplicacion }}</td>
-                    <td>{{ app.nombre_aplicacion }}</td>
-                    <td>{{ app.bloque.desc_bloque }}</td>
-                    <td>{{ app.criticidad.desc_criticidad }}</td>
-                    <td>{{ app.estado.desc_estado }}</td>
-                    <td>{{ app.desc_aplicacion|truncatechars:50 }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="content-wrapper">
+        <form method="get" action="">
+            <div class="filter-box">
+                <div class="filter-header">
+                    <h3>Filtros de Búsqueda</h3>
+                    <button id="toggle-filters-btn" class="btn-secondary" type="button">Mostrar Filtros</button>
+                </div>
+                <div id="filter-container" style="display: none;">
+                    <div class="filter-grid">
+                        <div class="filter-group">
+                            <label for="nombre_app">Código o Nombre:</label>
+                            <input type="text" id="nombre_app" name="nombre_app" placeholder="Buscar por código o nombre..." value="{{ filtros_aplicados.nombre_app|default:'' }}">
+                        </div>
+                        <div class="filter-group">
+                            <label for="bloque">Bloque:</label>
+                            <select id="bloque" name="bloque">
+                                <option value="">Todos</option>
+                                {% for blq in bloques %}
+                                    <option value="{{ blq.id }}" {% if blq.id == filtros_aplicados.bloque %}selected{% endif %}>
+                                        {{ blq.desc_bloque }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="criticidad">Criticidad:</label>
+                            <select id="criticidad" name="criticidad">
+                                <option value="">Todas</option>
+                                {% for crit in criticidades %}
+                                    <option value="{{ crit.id }}" {% if crit.id == filtros_aplicados.criticidad %}selected{% endif %}>
+                                        {{ crit.desc_criticidad }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="estado">Estado:</label>
+                            <select id="estado" name="estado">
+                                <option value="">Todos</option>
+                                {% for est in estados %}
+                                    <option value="{{ est.id }}" {% if est.id == filtros_aplicados.estado %}selected{% endif %}>
+                                        {{ est.desc_estado }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="filter-actions">
+                        <button type="submit" class="btn filter-btn">Filtrar</button>
+                        <button type="button" id="limpiar-filtros-btn" class="btn filter-btn">Limpiar Filtros</button>
+                    </div>                   
+                </div>
+            </div>
+        </form>
+        
+        <div class="action-buttons-container">
+            <a href="{% url 'gestion:registrar_aplicacion' %}" class="btn link-con-spinner">Registrar Aplicación</a>
+        </div>
+
+        <div class="table-container">
+            <table id="tabla-aplicaciones" class="data-table" data-total-registros="{{ total_registros|default:0 }}">
+                <thead>
+                    <tr>
+                        <th>Eliminar</th>
+                        <th>Editar</th>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Bloque</th>
+                        <th>Criticidad</th>
+                        <th>Estado</th>
+                        <th>Descripción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for app in lista_de_aplicaciones %}
+                    <tr>
+                        <td class="text-center">
+                            <form action="{% url 'gestion:eliminar_aplicacion' app.id %}" method="post" onsubmit="return confirm('¿Estás seguro de que deseas eliminar esta aplicación?');" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-icon btn-delete" title="Eliminar">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
+                        </td>
+                        <td class="text-center">
+                            <a href="{% url 'gestion:editar_aplicacion' app.id %}" class="btn-icon btn-edit" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </td>
+                        <td>{{ app.cod_aplicacion|truncatechars:20 }}</td>
+                        <td>{{ app.nombre_aplicacion|truncatechars:30 }}</td>
+                        <td>{{ app.bloque.desc_bloque }}</td>
+                        <td>{{ app.criticidad.desc_criticidad }}</td>
+                        <td>{{ app.estado.desc_estado }}</td>
+                        <td>{{ app.desc_aplicacion|truncatechars:45 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
-{% endblock content %}
+    {% endblock content %}
 
 {% block extra_scripts %}
-<script>
-    $(document).ready(function() {
-        $('#tabla-aplicaciones').DataTable({
-            "language": {
-                "lengthMenu": "Mostrar _MENU_ registros por página",
-                "zeroRecords": "No se encontraron resultados",
-                "info": "Mostrando página _PAGE_ de _PAGES_",
-                "infoEmpty": "No hay registros disponibles",
-                "infoFiltered": "(filtrado de un total de _MAX_ registros)",
-                "search": "Buscar:",
-                "paginate": {
-                    "first": "Primero",
-                    "last": "Último",
-                    "next": "Siguiente",
-                    "previous": "Anterior"
-                }
-            },
-            "lengthMenu": [
-                [10, 25, 50, 100, -1],
-                [10, 25, 50, 100, "Todas"]
-            ],
-            "scrollY": "60vh",
-            "scrollCollapse": true,
-            "paging": true,
-            "pageLength": 25,
-            "order": [[ 2, "asc" ]],
-            "initComplete": function(settings, json) {
-                // Quita la clase de carga para hacer la tabla visible
-                $('#tabla-codigos-cierre').removeClass('data-table-loading');
-            },
-            "drawCallback": function(settings) {
-                var totalRegistros = {{ total_registros|default:0 }};
-                var totalInfo = '<div class="total-records-info">Total de registros existentes: <strong>' + totalRegistros + '</strong></div>';
-                if ($('#tabla-aplicaciones_info .total-records-info').length === 0) {
-                    $('#tabla-aplicaciones_info').append(totalInfo);
-                }
-            }
-        });
-    });
-</script>
+    <script src="{% static 'gestion/js/aplicaciones.js' %}"></script>
 {% endblock extra_scripts %}

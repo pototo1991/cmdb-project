@@ -12,7 +12,6 @@
 {% endblock extra_nav_buttons %}
 
 {% block content %}
-<div class="main-content">
     <div class="page-header">
         <h1 class="page-title">Carga Masiva de Códigos de Cierre</h1>
     </div>
@@ -84,5 +83,7 @@
             </table>
         {% endif %}
     </div>
-</div>
 {% endblock content %}
+{% block extra_scripts %}
+    <script src="{% static 'gestion/js/carga_masiva.js' %}"></script>
+{% endblock extra_scripts %}

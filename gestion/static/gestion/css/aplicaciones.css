@@ -1,0 +1,293 @@
+/* gestion\static\gestion\css\aplicaciones.css
+/* --- ================================== --- */
+
+
+/* ---   CSS PARA PÁGINA DE APLICACIONES    --- */
+
+
+/* --- (Versión consolidada y final)      --- */
+
+
+/* --- ================================== --- */
+
+
+/*
+  Este archivo contiene todos los estilos necesarios para
+  aplicaciones.html, incluyendo estilos de tabla, filtros
+  y controles de DataTable, usando la paleta de base.css.
+*/
+
+
+/* --- Estilos de Página y Títulos (fusionado de listado_tablas.css) --- */
+
+.page-header {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.page-title {
+    color: var(--color-blanco);
+    font-weight: 400;
+    margin-bottom: 25px;
+    font-size: 2.2rem;
+    /* Ajustado para que sea más prominente */
+}
+
+
+/* --- Contenedor principal para alinear filtro y tabla --- */
+
+.content-wrapper {
+    width: 100%;
+    /* max-width: 1600px; */
+    /* Un ancho máximo para que no se extienda demasiado en pantallas muy grandes */
+}
+
+
+/* --- Estilos para Filtros (código nuevo) --- */
+
+.filter-box {
+    width: 100%;
+    background-color: var(--color-morado);
+    border: 1px solid var(--color-purpura);
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: var(--color-morado-oscuro);
+    border-radius: 8px 8px 0 0;
+}
+
+.filter-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--color-blanco);
+    font-weight: 500;
+}
+
+#toggle-filters-btn,
+.filter-btn {
+    background-color: transparent;
+    border: 1px solid var(--color-purpura);
+    color: var(--color-blanco);
+    padding: 5px 10px;
+    /* <-- Menos espacio interno (vertical y horizontal) */
+    font-size: 0.9em;
+    /* <-- Texto un poco más pequeño */
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+#toggle-filters-btn:hover,
+.filter-btn:hover {
+    background-color: var(--color-purpura);
+    color: var(--color-blanco);
+}
+
+#filter-container {
+    padding: 20px;
+    border-top: 1px solid var(--color-purpura);
+}
+
+
+/* Contenedor para la fila de filtros */
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    /* 4 columnas para campos más cortos */
+    gap: 15px;
+    margin-bottom: 20px;
+    align-items: end;
+    /* Alinea los grupos de filtros en la base */
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    /* Etiqueta arriba, campo abajo */
+}
+
+.filter-group label {
+    font-weight: 500;
+    color: var(--color-gris-ceramica);
+    margin-bottom: 8px;
+    /* Espacio entre la etiqueta y el campo */
+    text-align: left;
+    /* Asegura que la etiqueta esté alineada a la izquierda */
+}
+
+.filter-group input[type="text"],
+.filter-group select {
+    flex-grow: 1;
+    flex-basis: 0;
+    /* width: 100%; */
+    padding: 10px;
+    background-color: var(--color-morado-oscuro);
+    border: 1px solid var(--color-purpura);
+    border-radius: 4px;
+    color: var(--color-gris-ceramica);
+    box-sizing: border-box;
+}
+
+.filter-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+
+/* --- Contenedor para botones de acción (ej. "Registrar Aplicación") --- */
+
+.action-buttons-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.action-buttons-container .filter-btn {
+    background-color: var(--color-purpura);
+}
+
+.action-buttons-container .filter-btn:hover {
+    background-color: var(--color-purpura-oscuro);
+}
+
+.action-buttons-container .btn {
+    padding: 12px 30px;
+    /* <-- Reduce el relleno vertical de 20px a 12px */
+    font-size: 1em;
+    /* <-- Opcional: reduce un poco el tamaño de la letra */
+}
+
+
+/* --- Contenedor y Estilos de la Tabla (fusionado de listado_tablas.css) --- */
+
+.table-container {
+    background-color: var(--color-morado);
+    /* Fondo de la tabla */
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid var(--color-purpura);
+    margin-top: 20px;
+    box-sizing: border-box;
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table thead th {
+    background-color: var(--color-morado-oscuro);
+    /* Cabecera más oscura */
+    color: var(--color-purpura);
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 2px solid var(--color-purpura);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.data-table tbody td {
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--color-morado-oscuro);
+    /* Borde de fila sutil */
+    color: var(--color-texto-secundario);
+    vertical-align: middle;
+    font-size: 0.9em;
+    /* <-- Letra un poco más pequeña para que quepa más información */
+}
+
+.data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.data-table tbody tr:hover {
+    background-color: var(--color-morado-oscuro);
+    /* Efecto hover */
+}
+
+
+/* --- Iconos de acción en la tabla (código original) --- */
+
+.btn-icon {
+    background: none;
+    border: none;
+    color: var(--color-gris-ceramica);
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-icon:hover {
+    transform: scale(1.1);
+}
+
+.btn-edit:hover {
+    color: var(--color-purpura);
+}
+
+.btn-delete:hover {
+    color: var(--color-logout-hover);
+}
+
+.text-center {
+    text-align: center;
+}
+
+
+/* --- Controles de DataTables (código original) --- */
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate {
+    color: var(--color-blanco) !important;
+    margin-bottom: 15px;
+}
+
+.dataTables_wrapper .dataTables_length select,
+.dataTables_wrapper .dataTables_filter input {
+    background-color: var(--color-morado-oscuro);
+    color: var(--color-gris-ceramica);
+    border: 1px solid var(--color-purpura);
+    border-radius: 4px;
+    padding: 5px;
+    margin-left: 5px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    color: var(--color-blanco) !important;
+    border: 1px solid var(--color-purpura);
+    margin: 0 2px;
+    border-radius: 4px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+    background: var(--color-purpura) !important;
+    color: var(--color-blanco) !important;
+    border-color: var(--color-purpura);
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: var(--color-purpura-oscuro) !important;
+    color: var(--color-blanco) !important;
+    border-color: var(--color-purpura-oscuro);
+}

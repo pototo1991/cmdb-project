@@ -2,31 +2,73 @@
 
 import csv
 import io
-from ..models import Aplicacion, Bloque, Criticidad, Estado
-from .utils import no_cache
-from django.contrib import messages, auth
-from django.shortcuts import render, redirect
-from django.shortcuts import render
+
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
+from django.shortcuts import render, redirect
+
+from ..models import Aplicacion, Bloque, Criticidad, Estado
 from .utils import no_cache, logger
-from ..models import Aplicacion
 
 
 @login_required
 @no_cache
 def aplicaciones_view(request):
-    """Muestra la lista de aplicaciones."""
+    """Muestra la lista de aplicaciones y permite filtrarlas."""
     logger.info(
         f"El usuario '{request.user}' está viendo la lista de aplicaciones.")
-    aplicaciones = Aplicacion.objects.select_related(
-        'bloque', 'criticidad', 'estado').all()
-    # 1. Contamos el total de registros.
-    total_registros = aplicaciones.count()
 
-    # 2. Añadimos el total al contexto que se envía a la plantilla.
+    # 1. Queryset base optimizado.
+    aplicaciones_qs = Aplicacion.objects.select_related(
+        'bloque', 'criticidad', 'estado').all()
+
+    # Contar el total de registros ANTES de aplicar los filtros para el contador global.
+    total_registros_en_db = aplicaciones_qs.count()
+
+    # 2. Obtener valores de los filtros desde la URL (request.GET)
+    filtro_nombre = request.GET.get('nombre_app', '')
+    filtro_bloque_id = request.GET.get('bloque', '')
+    filtro_criticidad_id = request.GET.get('criticidad', '')
+    filtro_estado_id = request.GET.get('estado', '')
+
+    # 3. Aplicar filtros al queryset solo si el usuario los envía
+    if filtro_nombre:
+        # Usamos Q para buscar en múltiples campos (código o nombre)
+        aplicaciones_qs = aplicaciones_qs.filter(
+            Q(nombre_aplicacion__icontains=filtro_nombre) |
+            Q(cod_aplicacion__icontains=filtro_nombre)
+        )
+
+    if filtro_bloque_id and filtro_bloque_id.isdigit():
+        aplicaciones_qs = aplicaciones_qs.filter(bloque_id=filtro_bloque_id)
+
+    if filtro_criticidad_id and filtro_criticidad_id.isdigit():
+        aplicaciones_qs = aplicaciones_qs.filter(
+            criticidad_id=filtro_criticidad_id)
+
+    if filtro_estado_id and filtro_estado_id.isdigit():
+        aplicaciones_qs = aplicaciones_qs.filter(estado_id=filtro_estado_id)
+
+    # 4. Obtener todos los objetos para llenar los <select> de los filtros
+    bloques = Bloque.objects.all().order_by('desc_bloque')
+    criticidades = Criticidad.objects.all().order_by('desc_criticidad')
+    estados = Estado.objects.all().order_by('desc_estado')
+
+    # 5. Preparar el contexto para la plantilla
     context = {
-        'lista_de_aplicaciones': aplicaciones,
-        'total_registros': total_registros,
+        'lista_de_aplicaciones': aplicaciones_qs,
+        'total_registros': total_registros_en_db,
+        'bloques': bloques,
+        'criticidades': criticidades,
+        'estados': estados,
+        # Diccionario para recordar los filtros aplicados en el formulario
+        'filtros_aplicados': {
+            'nombre_app': filtro_nombre,
+            'bloque': int(filtro_bloque_id) if filtro_bloque_id.isdigit() else '',
+            'criticidad': int(filtro_criticidad_id) if filtro_criticidad_id.isdigit() else '',
+            'estado': int(filtro_estado_id) if filtro_estado_id.isdigit() else '',
+        }
     }
 
     return render(request, 'gestion/aplicaciones.html', context)

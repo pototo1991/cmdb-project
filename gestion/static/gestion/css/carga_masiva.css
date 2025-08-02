@@ -186,3 +186,12 @@
 .data-table tbody tr:hover {
     background-color: var(--color-tabla-fila-hover, #3a3e44);
 }
+
+
+/* Estilo para el span que muestra el nombre del archivo seleccionado */
+
+.file-name {
+    margin-left: 15px;
+    color: var(--color-gris-ceramica);
+    font-style: italic;
+}

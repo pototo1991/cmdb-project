@@ -6,13 +6,11 @@
 {% block extra_css %}<link rel="stylesheet" href="{% static 'gestion/css/dashboard.css' %}">{% endblock %}
 
 {% block content %}
-    <div class="main-content">
-        <h1>Menú Principal</h1>
-        <p>Seleccione una opción para comenzar a gestionar sus activos.</p>
-        <div class="action-buttons">
-            <a href="{% url 'gestion:incidencias' %}" class="btn link-con-spinner">Gestión de Incidencias</a>
-            <a href="#" class="btn">Gestión de RCA (Próximamente)</a>
-            <a href="{% url 'gestion:graficos' %}" class="btn link-con-spinner">Dashboard de Gráficos</a>
-        </div>
+    <h1>Menú Principal</h1>
+    <p>Seleccione una opción para comenzar a gestionar sus activos.</p>
+    <div class="action-buttons">
+        <a href="{% url 'gestion:incidencias' %}" class="btn link-con-spinner">Gestión de Incidencias</a>
+        <a href="#" class="btn">Gestión de RCA (Próximamente)</a>
+        <a href="{% url 'gestion:graficos' %}" class="btn link-con-spinner">Dashboard de Gráficos</a>
     </div>
 {% endblock content %}

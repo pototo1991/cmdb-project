@@ -1,0 +1,280 @@
+/* gestion\static\gestion\css\cod_cierre.css */
+
+
+/* Estilos específicos para la página de listado de Códigos de Cierre. */
+
+
+/* --- Títulos de Página --- */
+
+.page-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    /* Alinea el título a la izquierda y el botón a la derecha */
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.page-title {
+    color: var(--color-blanco);
+    font-weight: 400;
+    margin-bottom: 25px;
+}
+
+
+/* --- Contenedor de la Tabla --- */
+
+.table-container {
+    background-color: var(--color-tabla-fondo, #2c2f33);
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid var(--color-purpura);
+    margin-top: 20px;
+    box-sizing: border-box;
+}
+
+
+/* --- Estilos Generales de la Tabla --- */
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #e0e0e0;
+}
+
+.data-table thead th {
+    background-color: var(--color-tabla-header-fondo, #1f2833);
+    color: var(--color-purpura);
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 2px solid var(--color-tabla-borde-acento, #c3073f);
+    font-weight: 700;
+}
+
+.data-table tbody td {
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--color-tabla-borde-fila, #454a52);
+    color: #888787;
+}
+
+.data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.data-table tbody tr:hover {
+    background-color: var(--color-tabla-fila-hover, #3a3e44);
+}
+
+
+/* --- Iconos y Botones en la Tabla --- */
+
+.btn-icon {
+    background: none;
+    border: none;
+    color: #e0e0e0;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.btn-icon.btn-edit:hover {
+    color: var(--color-icono-editar-hover, #00aaff);
+}
+
+.btn-icon.btn-delete:hover {
+    color: var(--color-purpura);
+}
+
+.text-center {
+    text-align: center;
+}
+
+
+/* --- Controles de DataTables --- */
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate {
+    color: var(--color-blanco) !important;
+    margin-bottom: 15px;
+}
+
+.dataTables_wrapper .dataTables_length select,
+.dataTables_wrapper .dataTables_filter input {
+    background-color: var(--color-tabla-header-fondo, #1f2833);
+    color: #e0e0e0;
+    border: 1px solid var(--color-tabla-borde-acento, #c3073f);
+    border-radius: 4px;
+    padding: 5px;
+    margin-left: 5px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    color: var(--color-blanco) !important;
+    border: 1px solid var(--color-tabla-borde-acento, #c3073f);
+    margin: 0 2px;
+    border-radius: 4px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+    background: var(--color-tabla-borde-acento, #c3073f) !important;
+    color: var(--color-blanco) !important;
+    border-color: var(--color-tabla-borde-acento, #c3073f);
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: var(--color-purpura) !important;
+    color: var(--color-blanco) !important;
+    border-color: var(--color-purpura);
+}
+
+
+/* --- Botón Principal de la Página --- */
+
+.btn.btn-primary {
+    background-color: var(--color-purpura);
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.btn.btn-primary:hover {
+    background-color: var(--color-purpura-oscuro);
+}
+
+table.data-table-loading>tbody {
+    visibility: hidden;
+}
+
+.action-buttons-container .btn {
+    padding: 12px 30px;
+    /* <-- Reduce el relleno vertical de 20px a 12px */
+    font-size: 1em;
+    /* <-- Opcional: reduce un poco el tamaño de la letra */
+}
+
+
+/* Estilos para los contadores personalizados de DataTables */
+
+.total-records-info,
+.filtered-records-info {
+    display: block;
+    margin-right: 4px;
+    font-size: 0.9em;
+}
+
+
+/* ============================================= */
+
+
+/* ---        ESTILOS PARA EL FILTRO           --- */
+
+
+/* ============================================= */
+
+.content-wrapper {
+    width: 100%;
+    /* max-width: 1600px; */
+}
+
+.filter-box {
+    width: 100%;
+    background-color: var(--color-morado);
+    border: 1px solid var(--color-purpura);
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: var(--color-morado-oscuro);
+    border-radius: 8px 8px 0 0;
+}
+
+.filter-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--color-blanco);
+    font-weight: 500;
+}
+
+#toggle-filters-btn,
+.filter-btn {
+    background-color: transparent;
+    border: 1px solid var(--color-purpura);
+    color: var(--color-blanco);
+    padding: 5px 10px;
+    font-size: 0.9em;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+#toggle-filters-btn:hover,
+.filter-btn:hover {
+    background-color: var(--color-purpura);
+    color: var(--color-blanco);
+}
+
+#filter-container {
+    padding: 20px;
+    border-top: 1px solid var(--color-purpura);
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.filter-group label {
+    font-weight: 500;
+    color: var(--color-gris-ceramica);
+    flex-shrink: 0;
+    width: 80px;
+}
+
+.filter-group input[type="text"],
+.filter-group select {
+    flex-grow: 1;
+    flex-basis: 0;
+    padding: 10px;
+    background-color: var(--color-morado-oscuro);
+    border: 1px solid var(--color-purpura);
+    border-radius: 4px;
+    color: var(--color-gris-ceramica);
+    box-sizing: border-box;
+}
+
+.filter-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+}
+
+.action-buttons-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}

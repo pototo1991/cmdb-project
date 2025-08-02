@@ -1,62 +1,71 @@
-/* --- ================================== --- */
+/* ================================================================= */
 
 
-/* ---    CSS PARA GESTIÓN DE INCIDENCIAS   --- */
+/* --- CSS UNIFICADO PARA GESTIÓN DE INCIDENCIAS Y TABLAS --- */
 
 
-/* --- ================================== --- */
+/* ================================================================= */
 
 
-/* Contenedor general de la página */
+/* --- Títulos de Página --- */
 
-.page-container {
-    width: 98%;
-    /* max-width: 2400px; */
-    margin: 20px auto;
-    padding: 10px;
+.page-title {
+    color: var(--color-blanco);
+    font-weight: 400;
+    margin-bottom: 25px;
 }
 
 
-/* Estilos del contenedor de filtros */
+/* --- ESTILOS DE CONTENEDORES PRINCIPALES --- */
+
+.form-filtros {
+    width: 100%;
+}
+
+
+/* Regla unificada para restaurar el contorno y fondo */
+
+.filter-box,
+.table-container {
+    border: 1px solid var(--color-purpura);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 25px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+
+/* Estilo específico para la caja de filtros */
 
 .filter-box {
     background-color: var(--color-morado);
-    border: 1px solid var(--color-purpura);
-    border-radius: 8px;
     padding: 20px 25px;
-    margin-bottom: 25px;
 }
+
+
+/* Estilo específico para el contenedor de la tabla */
+
+.table-container {
+    background-color: var(--color-tabla-fondo, #2c2f33);
+    /* Se ajusta el margen para que no haya doble espaciado */
+    margin-top: 20px;
+}
+
+
+/* --- Estilos del Cabezal de Filtros --- */
 
 .filter-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     cursor: pointer;
-    /* Para indicar que se puede hacer clic */
 }
 
 .filter-header h3 {
     margin: 0;
     color: var(--color-blanco);
     font-weight: 400;
-}
-
-.btn-secondary {
-    background-color: transparent;
-    /* La línea del borde se ha quitado */
-    color: var(--color-gris-ceramica);
-    padding: 8px 15px;
-    border: 1px solid transparent;
-    /* Opcional: para evitar que el botón "salte" al aparecer el borde en hover */
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.btn-secondary:hover {
-    background-color: var(--color-purpura);
-    color: var(--color-blanco);
-    border-color: var(--color-purpura);
 }
 
 #filter-container {
@@ -96,6 +105,16 @@
     border-color: var(--color-purpura);
 }
 
+
+/* --- BOTONES --- */
+
+.action-buttons-container {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+}
+
 .btn.filter-btn {
     margin-top: 20px;
     background-color: var(--color-purpura);
@@ -103,15 +122,20 @@
     padding: 10px 30px;
 }
 
+.btn-secondary {
+    background-color: transparent;
+    color: var(--color-gris-ceramica);
+    padding: 8px 15px;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
 
-/* Contenedor de botones de acción (Registrar, Carga Masiva, etc.) */
-
-.action-buttons-container {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 25px;
-    flex-wrap: wrap;
-    /* Para que se adapte en pantallas pequeñas */
+.btn-secondary:hover {
+    background-color: var(--color-purpura);
+    color: var(--color-blanco);
+    border-color: var(--color-purpura);
 }
 
 .btn-report {
@@ -122,16 +146,100 @@
     background-color: var(--color-reporte-hover, #2a8c4d);
 }
 
+.btn-icon {
+    background: none;
+    border: none;
+    color: #e0e0e0;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: color 0.3s;
+}
 
-/* --- Unificación de Anchos --- */
+.btn-icon.btn-edit:hover {
+    color: var(--color-icono-editar-hover, #00aaff);
+}
+
+.btn-icon.btn-delete:hover {
+    color: var(--color-purpura);
+}
 
 
-/* Para asegurar que el contenedor de filtros y el de la tabla tengan el mismo ancho */
+/* --- ESTILOS DE LA TABLA (DATATABLES) --- */
 
-.filter-box,
-.table-container {
+.data-table {
     width: 100%;
-    /* Hacemos que ambos ocupen el 100% de su contenedor padre (.page-container) */
-    box-sizing: border-box;
-    /* Asegura que el padding y borde se incluyan en el ancho total */
+    border-collapse: collapse;
+    color: #e0e0e0;
+}
+
+.data-table thead th {
+    background-color: var(--color-tabla-header-fondo, #1f2833);
+    color: var(--color-purpura);
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 2px solid var(--color-tabla-borde-acento, #c3073f);
+    font-weight: 700;
+}
+
+.data-table tbody td {
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--color-tabla-borde-fila, #454a52);
+    color: #888787;
+}
+
+.data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.data-table tbody tr:hover {
+    background-color: var(--color-tabla-fila-hover, #3a3e44);
+}
+
+table.data-table-loading>tbody {
+    visibility: hidden;
+}
+
+.text-center {
+    text-align: center;
+}
+
+
+/* Controles de DataTables */
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate {
+    color: var(--color-blanco) !important;
+    margin-bottom: 15px;
+}
+
+.dataTables_wrapper .dataTables_length select,
+.dataTables_wrapper .dataTables_filter input {
+    background-color: var(--color-tabla-header-fondo, #1f2833);
+    color: #e0e0e0;
+    border: 1px solid var(--color-tabla-borde-acento, #c3073f);
+    border-radius: 4px;
+    padding: 5px;
+    margin-left: 5px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    color: var(--color-blanco) !important;
+    border: 1px solid var(--color-tabla-borde-acento, #c3073f);
+    margin: 0 2px;
+    border-radius: 4px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+    background: var(--color-tabla-borde-acento, #c3073f) !important;
+    color: var(--color-blanco) !important;
+    border-color: var(--color-tabla-borde-acento, #c3073f);
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: var(--color-purpura) !important;
+    color: var(--color-blanco) !important;
+    border-color: var(--color-purpura);
 }

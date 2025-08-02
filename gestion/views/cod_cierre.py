@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db.models import Q  # <-- AÑADIDO: Importante para búsquedas complejas
 from .utils import no_cache, logger
 from ..models import CodigoCierre, Aplicacion
 
@@ -13,14 +14,50 @@ from ..models import CodigoCierre, Aplicacion
 @login_required
 @no_cache
 def codigos_cierre_view(request):
-    """Muestra la lista de códigos de cierre."""
+    """
+    Muestra la lista de códigos de cierre, aplicando los filtros que lleguen por GET.
+    """
     logger.info(
         f"El usuario '{request.user}' está viendo la lista de códigos de cierre.")
-    codigos = CodigoCierre.objects.select_related('aplicacion').all()
-    total_registros = codigos.count()
+
+    # Obtener los valores de los filtros desde la URL
+    filtro_cod = request.GET.get('cod_cierre', '')
+    filtro_app_id = request.GET.get('aplicacion', '')
+
+    # --- INICIO DE LA CORRECCIÓN ---
+
+    # 1. Empezar con todos los códigos.
+    codigos_query = CodigoCierre.objects.select_related('aplicacion').all()
+
+    # 2. Contar el total de registros ANTES de aplicar cualquier filtro.
+    #    Este es el valor que será fijo en la interfaz.
+    total_registros_db = codigos_query.count()  # <-- CAMBIO CLAVE
+
+    # 3. Ahora, aplicar los filtros sobre el query para la tabla.
+    if filtro_cod:
+        # Busca el texto en el código de cierre O en la descripción
+        codigos_query = codigos_query.filter(
+            Q(cod_cierre__icontains=filtro_cod) |
+            Q(desc_cod_cierre__icontains=filtro_cod)
+        )
+
+    if filtro_app_id:
+        # Filtra por el ID exacto de la aplicación
+        codigos_query = codigos_query.filter(aplicacion_id=filtro_app_id)
+
+    # --- FIN DE LA CORRECCIÓN ---
+
+    # Obtener todas las aplicaciones para poblar el menú desplegable del filtro
+    aplicaciones_para_filtro = Aplicacion.objects.all().order_by('nombre_aplicacion')
+
     context = {
-        'lista_de_codigos': codigos,
-        'total_registros': total_registros,
+        'lista_de_codigos': codigos_query,           # <-- Se pasa la lista ya filtrada
+        'total_registros': total_registros_db,       # <-- Se pasa el conteo total REAL
+        'aplicaciones': aplicaciones_para_filtro,
+        'filtros_aplicados': {
+            'cod_cierre': filtro_cod,
+            'aplicacion': int(filtro_app_id) if filtro_app_id else None,
+        }
     }
     return render(request, 'gestion/cod_cierre.html', context)
 
