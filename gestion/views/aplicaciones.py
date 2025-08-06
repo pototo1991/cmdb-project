@@ -6,27 +6,66 @@ from ..models import Aplicacion, Bloque, Criticidad, Estado
 from .utils import no_cache
 from django.contrib import messages, auth
 from django.shortcuts import render, redirect
-from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from .utils import no_cache, logger
-from ..models import Aplicacion
+from ..models import Aplicacion, Bloque, Criticidad, Estado
 
 
 @login_required
 @no_cache
 def aplicaciones_view(request):
-    """Muestra la lista de aplicaciones."""
+    """
+    Muestra la lista de aplicaciones y permite filtrarlas.
+    """
     logger.info(
         f"El usuario '{request.user}' está viendo la lista de aplicaciones.")
-    aplicaciones = Aplicacion.objects.select_related(
-        'bloque', 'criticidad', 'estado').all()
-    # 1. Contamos el total de registros.
-    total_registros = aplicaciones.count()
 
-    # 2. Añadimos el total al contexto que se envía a la plantilla.
+    # 1. Queryset base optimizado
+    aplicaciones_qs = Aplicacion.objects.select_related(
+        'bloque', 'criticidad', 'estado').all()
+
+    # 2. Obtener valores de los filtros desde la URL (request.GET)
+    filtro_nombre = request.GET.get('nombre_app')
+    filtro_codigo = request.GET.get('codigo_app')
+    filtro_bloque_id = request.GET.get('bloque')
+    filtro_criticidad_id = request.GET.get('criticidad')
+    filtro_estado_id = request.GET.get('estado')
+
+    # 3. Aplicar filtros al queryset solo si el usuario los envía
+    if filtro_nombre:
+        aplicaciones_qs = aplicaciones_qs.filter(
+            nombre_aplicacion__icontains=filtro_nombre)
+
+    if filtro_codigo:
+        aplicaciones_qs = aplicaciones_qs.filter(
+            cod_aplicacion__icontains=filtro_codigo)
+
+    if filtro_bloque_id and filtro_bloque_id.isdigit():
+        aplicaciones_qs = aplicaciones_qs.filter(bloque_id=filtro_bloque_id)
+
+    if filtro_criticidad_id and filtro_criticidad_id.isdigit():
+        aplicaciones_qs = aplicaciones_qs.filter(
+            criticidad_id=filtro_criticidad_id)
+
+    if filtro_estado_id and filtro_estado_id.isdigit():
+        aplicaciones_qs = aplicaciones_qs.filter(estado_id=filtro_estado_id)
+
+    # 4. Obtener todos los objetos para llenar los <select> de los filtros
+    todos_los_bloques = Bloque.objects.all().order_by('desc_bloque')
+    todas_las_criticidades = Criticidad.objects.all().order_by('desc_criticidad')
+    todos_los_estados = Estado.objects.all().order_by('desc_estado')
+
+    # 5. Contamos el total de registros ANTES de la paginación (si la hubiera)
+    total_registros = Aplicacion.objects.count()
+
+    # 6. Añadimos todo al contexto que se envía a la plantilla
     context = {
-        'lista_de_aplicaciones': aplicaciones,
+        'lista_de_aplicaciones': aplicaciones_qs,
         'total_registros': total_registros,
+        # Listas para los dropdowns de los filtros
+        'todos_los_bloques': todos_los_bloques,
+        'todas_las_criticidades': todas_las_criticidades,
+        'todos_los_estados': todos_los_estados,
     }
 
     return render(request, 'gestion/aplicaciones.html', context)

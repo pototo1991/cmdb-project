@@ -3,7 +3,7 @@
 
 {% block title %}Códigos de Cierre - CMDB{% endblock %}
 
-{% block extra_css %}<link rel="stylesheet" href="{% static 'gestion/css/listado_tablas.css' %}">{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'gestion/css/cod_cierre.css' %}">{% endblock %}
 
 {% block extra_nav_buttons %}
     <a href="{% url 'gestion:incidencias' %}" class="navbar-link link-con-spinner">Listado Incidencias</a>
@@ -12,15 +12,47 @@
 {% endblock extra_nav_buttons %}
 
 {% block content %}
+<div class="page-container" data-total-registros="{{ total_registros|default:0 }}">
 
     <div class="page-header">
         <h1 class="page-title">Listado de Códigos de Cierre</h1>
         <a href="{% url 'gestion:registrar_cod_cierre' %}" class="btn btn-primary link-con-spinner">Registrar Código de Cierre</a>
     </div>
 
+    <form method="get" action="">
+        <div class="filter-box">
+            <div class="filter-header">
+                <h3>Filtros de Búsqueda</h3>
+                <button id="toggle-filters-btn" class="btn-secondary" type="button">Mostrar Filtros</button>
+            </div>
+            <div id="filter-container" style="display: none;">
+                <div class="filter-grid">
+                    <div class="filter-group">
+                        <label for="codigo_cierre">Código de Cierre:</label>
+                        <input type="text" id="codigo_cierre" name="codigo_cierre" value="{{ request.GET.codigo_cierre|default:'' }}" placeholder="Buscar por código...">
+                    </div>
+                    <div class="filter-group">
+                        <label for="aplicacion">Aplicación:</label>
+                        <select id="aplicacion" name="aplicacion">
+                            <option value="">Todas</option>
+                            {% for app in todas_las_aplicaciones %}
+                                <option value="{{ app.id }}" {% if request.GET.aplicacion == app.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ app.nombre_aplicacion }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="filter-actions">
+                    <button type="submit" class="btn filter-btn">Filtrar</button>
+                    <a href="{% url 'gestion:codigos_cierre' %}" class="btn filter-btn">Limpiar Filtros</a>
+                </div>
+            </div>
+        </div>
+    </form>
     <div class="table-container">
         <table id="tabla-codigos-cierre" class="data-table data-table-loading">
-        <thead>
+            <thead>
                 <tr>
                     <th>Eliminar</th>
                     <th>Editar</th>
@@ -55,80 +87,9 @@
             </tbody>
         </table>
     </div>
+</div>
 {% endblock content %}
 
 {% block extra_scripts %}
-<script>
-$(document).ready(function() {
-    // ===== INICIO DE LA CORRECCIÓN =====
-    // Ya no se añade la clase con JS. Solo se quita al final.
-    // La línea que estaba aquí se ha eliminado.
-    // ===== FIN DE LA CORRECCIÓN =====
-
-    $('#tabla-codigos-cierre').DataTable({
-        "language": {
-            "lengthMenu": "Mostrar _MENU_ registros por página",
-            "zeroRecords": "No se encontraron resultados",
-            "info": "Mostrando página _PAGE_ de _PAGES_",
-            "infoEmpty": "No hay registros disponibles",
-            "infoFiltered": "(filtrado de un total de _MAX_ registros)",
-            "search": "Buscar por:",
-            "paginate": {
-                "first": "Primero",
-                "last": "Último",
-                "next": "Siguiente",
-                "previous": "Anterior"
-            }
-        },
-        "lengthMenu": [
-            [10, 25, 50, 100, -1],
-            [10, 25, 50, 100, "Todas"]
-        ],
-        "scrollY": "60vh",
-        "scrollCollapse": true,
-        "paging": true,
-        "pageLength": 25,
-        "order": [[ 2, "asc" ]],
-
-        // =======================================================
-        //     SECCIÓN AÑADIDA PARA AJUSTAR LAS COLUMNAS
-        // =======================================================
-        "columnDefs": [
-            { "width": "5%", "targets": [0, 1] },   // Eliminar y Editar
-            { "width": "10%", "targets": 2 },      // Código de Cierre
-            { "width": "10%", "targets": 3 },      // Aplicación
-            { "width": "30%", "targets": 4 },      // Descripción
-            { "width": "30%", "targets": 5 }       // Causa de Cierre
-        ],
-        // =======================================================
-
-        "initComplete": function(settings, json) {
-            $('#tabla-codigos-cierre').removeClass('data-table-loading');
-        },
-        "drawCallback": function(settings) {
-            // 1. Obtenemos la instancia de la API de DataTables para trabajar con ella.
-            var api = this.api();
-
-            // 2. Obtenemos los diferentes contadores que necesitamos.
-            var filteredCount = api.page.info().recordsDisplay; // Total de registros después de aplicar filtros.
-            var totalRegistrosDB = {{ total_registros|default:0 }}; // Total de registros en la BD.
-
-            // 3. Seleccionamos el contenedor donde se muestra la información.
-            var infoContainer = $('#tabla-codigos-cierre_info');
-            
-            // 4. Creamos los HTML para nuestros contadores personalizados.
-            var filteredInfo = '<div class="filtered-records-info">Registros encontrados (filtrados): <strong>' + filteredCount + '</strong></div>';
-            var totalInfo = '<div class="total-records-info">Total de registros existentes: <strong>' + totalRegistrosDB + '</strong></div>';
-
-            // 5. Eliminamos los contadores personalizados anteriores para evitar que se dupliquen.
-            infoContainer.find('.filtered-records-info').remove();
-            infoContainer.find('.total-records-info').remove();
-            
-            // 6. Añadimos los nuevos contadores al contenedor.            
-            infoContainer.append(totalInfo);
-            infoContainer.append(filteredInfo);
-        }
-    });
-});
-</script>
+<script src="{% static 'gestion/js/cod_cierre.js' %}"></script>
 {% endblock extra_scripts %}

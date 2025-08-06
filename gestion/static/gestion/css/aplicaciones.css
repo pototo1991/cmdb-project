@@ -1,10 +1,13 @@
-/* gestion/static/gestion/css/incidencia.css */
+/* gestion/static/gestion/css/aplicaciones.css */
 
 
 /* --- ================================== --- */
 
 
-/* ---   ESTILOS UNIFICADOS PARA INCIDENCIAS  --- */
+/* ---   ESTILOS PARA PÁGINAS DE LISTADO (TABLAS)   --- */
+
+
+/* --- (Contenido de listado_tablas.css) --- */
 
 
 /* --- ================================== --- */
@@ -27,6 +30,25 @@
 }
 
 
+/* =====================================================
+    AQUÍ ESTÁ EL CAMBIO PARA EL ANCHO DE PANTALLA 
+=====================================================
+*/
+
+.page-container {
+    width: 100%;
+    margin: 20px 0;
+    /* Eliminamos el centrado con 'auto' */
+    padding: 10px 25px;
+    /* Damos un relleno horizontal de 25px */
+    box-sizing: border-box;
+    /* Asegura que el padding no afecte el ancho total */
+}
+
+
+/* ===================================================== */
+
+
 /* --- Contenedor de la Tabla --- */
 
 .table-container {
@@ -35,14 +57,16 @@
     border-radius: 8px;
     border: 1px solid var(--color-purpura);
     margin-top: 20px;
+    box-sizing: border-box;
 }
 
 
-/* --- Estilos Generales de la Tabla (DataTables) --- */
+/* --- Estilos Generales de la Tabla --- */
 
 .data-table {
     width: 100%;
     border-collapse: collapse;
+    color: #e0e0e0;
 }
 
 .data-table thead th {
@@ -57,8 +81,6 @@
 .data-table tbody td {
     padding: 10px 15px;
     border-bottom: 1px solid var(--color-tabla-borde-fila, #454a52);
-    /* El color del texto de las filas se define aquí */
-    /* color: #e0e0e0; */
     color: #888787;
 }
 
@@ -95,7 +117,7 @@
 }
 
 
-/* --- Controles de DataTables (Paginación, Búsqueda, etc.) --- */
+/* --- Controles de DataTables --- */
 
 .dataTables_wrapper .dataTables_length,
 .dataTables_wrapper .dataTables_filter,
@@ -136,29 +158,29 @@
 }
 
 
-/* --- Estado de carga de la tabla --- */
+/* --- Botón Principal de la Página --- */
+
+.btn.btn-primary {
+    background-color: var(--color-purpura);
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.btn.btn-primary:hover {
+    background-color: var(--color-purpura-oscuro);
+}
 
 table.data-table-loading>tbody {
     visibility: hidden;
 }
 
 
-/*  FIN: ESTILOS GENERALES DE TABLA 
- */
-
-
-/*  INICIO: ESTILOS ESPECÍFICOS DE LA PÁGINA DE INCIDENCIAS
-  (Contenido original de incidencia.css)
- */
-
-
-/* Contenedor general de la página */
-
-.page-container {
-    width: 98%;
-    margin: 20px auto;
-    padding: 10px;
-}
+/* --- INICIO: ESTILOS AÑADIDOS PARA EL CUADRO DE FILTROS --- */
 
 
 /* Estilos del contenedor de filtros */
@@ -169,6 +191,7 @@ table.data-table-loading>tbody {
     border-radius: 8px;
     padding: 20px 25px;
     margin-bottom: 25px;
+    margin-top: 20px;
 }
 
 .filter-header {
@@ -237,75 +260,17 @@ table.data-table-loading>tbody {
     border-color: var(--color-purpura);
 }
 
-.btn.filter-btn {
+.filter-actions {
     margin-top: 20px;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.btn.filter-btn {
     background-color: var(--color-purpura);
     color: var(--color-blanco);
     padding: 10px 30px;
-}
-
-
-/* Contenedor de botones de acción (Registrar, Carga Masiva, etc.) */
-
-.action-buttons-container {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 25px;
-    flex-wrap: wrap;
-}
-
-.btn-report {
-    background-color: var(--color-reporte, #1a6a35);
-}
-
-.btn-report:hover {
-    background-color: var(--color-reporte-hover, #2a8c4d);
-}
-
-
-/* Unificación de Anchos para que filtros y tabla coincidan */
-
-.filter-box,
-.table-container {
-    width: 100%;
-    box-sizing: border-box;
-}
-
-
-/* --- Estilos para la nueva barra superior de la tabla --- */
-
-.top-bar {
-    margin-bottom: 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-
-/* 
- * Alineamos el dropdown de registros y los contadores en la misma fila
- * para una vista más compacta.
- */
-
-.dataTables_wrapper .top-left {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-}
-
-
-/* Estilos para el contenedor de los nuevos contadores */
-
-.custom-counters {
-    display: flex;
-    gap: 1.5rem;
-    /* Espacio entre "Total" y "Encontrados" */
-    margin-left: 2rem;
-    /* Espacio entre el dropdown "Mostrar X" y los contadores */
-}
-
-.custom-counters .total-records-info,
-.custom-counters .filtered-records-info {
-    color: var(--color-blanco);
-    font-size: 0.9em;
+    border: none;
+    cursor: pointer;
 }

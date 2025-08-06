@@ -3,20 +3,77 @@
 
 {% block title %}Mantenedor de Aplicaciones - CMDB{% endblock %}
 
-{% block extra_css %}<link rel="stylesheet" href="{% static 'gestion/css/listado_tablas.css' %}">{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'gestion/css/aplicaciones.css' %}">{% endblock %}
 
 {% block extra_nav_buttons %}
-    <a href="{% url 'gestion:incidencias' %}" class="navbar-link link-con-spinner">Listado Incidencias</a>
-    <a href="{% url 'gestion:codigos_cierre' %}" class="navbar-link link-con-spinner">Mantenedor Códigos de Cierre</a>
-    <a href="{% url 'gestion:aplicaciones' %}" class="navbar-link link-con-spinner">Mantenedor Aplicaciones</a>
+    {% include 'gestion/_extra_nav_buttons.html' %}
 {% endblock extra_nav_buttons %}
 
 {% block content %}
+<div class="page-container" data-total-registros="{{ total_registros|default:0 }}">
+
     <div class="page-header">
         <h1 class="page-title">Listado de Aplicaciones</h1>
         <a href="{% url 'gestion:registrar_aplicacion' %}" class="btn btn-primary">Registrar Aplicación</a>
     </div>
 
+    <form method="get" action="">
+        <div class="filter-box">
+            <div class="filter-header">
+                <h3>Filtros de Búsqueda</h3>
+                <button id="toggle-filters-btn" class="btn-secondary" type="button">Mostrar Filtros</button>
+            </div>
+            <div id="filter-container" style="display: none;">
+                <div class="filter-grid">
+                    <div class="filter-group">
+                        <label for="nombre_app">Nombre Aplicación:</label>
+                        <input type="text" id="nombre_app" name="nombre_app" value="{{ request.GET.nombre_app|default:'' }}" placeholder="Buscar por nombre...">
+                    </div>
+                    <div class="filter-group">
+                        <label for="codigo_app">Código Aplicación:</label>
+                        <input type="text" id="codigo_app" name="codigo_app" value="{{ request.GET.codigo_app|default:'' }}" placeholder="Buscar por código...">
+                    </div>
+                    <div class="filter-group">
+                        <label for="bloque">Bloque:</label>
+                        <select id="bloque" name="bloque">
+                            <option value="">Todos</option>
+                            {% for b in todos_los_bloques %}
+                                <option value="{{ b.id }}" {% if request.GET.bloque == b.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ b.desc_bloque }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="criticidad">Criticidad:</label>
+                        <select id="criticidad" name="criticidad">
+                            <option value="">Todas</option>
+                            {% for c in todas_las_criticidades %}
+                                <option value="{{ c.id }}" {% if request.GET.criticidad == c.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ c.desc_criticidad }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="estado">Estado:</label>
+                        <select id="estado" name="estado">
+                            <option value="">Todos</option>
+                            {% for e in todos_los_estados %}
+                                <option value="{{ e.id }}" {% if request.GET.estado == e.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ e.desc_estado }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="filter-actions">
+                    <button type="submit" class="btn filter-btn">Filtrar</button>
+                    <a href="{% url 'gestion:aplicaciones' %}" class="btn filter-btn">Limpiar Filtros</a>
+                </div>
+            </div>
+        </div>
+    </form>
     <div class="table-container">
         <table id="tabla-aplicaciones" class="data-table">
             <thead>
@@ -58,47 +115,9 @@
             </tbody>
         </table>
     </div>
+</div>
 {% endblock content %}
 
 {% block extra_scripts %}
-<script>
-    $(document).ready(function() {
-        $('#tabla-aplicaciones').DataTable({
-            "language": {
-                "lengthMenu": "Mostrar _MENU_ registros por página",
-                "zeroRecords": "No se encontraron resultados",
-                "info": "Mostrando página _PAGE_ de _PAGES_",
-                "infoEmpty": "No hay registros disponibles",
-                "infoFiltered": "(filtrado de un total de _MAX_ registros)",
-                "search": "Buscar:",
-                "paginate": {
-                    "first": "Primero",
-                    "last": "Último",
-                    "next": "Siguiente",
-                    "previous": "Anterior"
-                }
-            },
-            "lengthMenu": [
-                [10, 25, 50, 100, -1],
-                [10, 25, 50, 100, "Todas"]
-            ],
-            "scrollY": "60vh",
-            "scrollCollapse": true,
-            "paging": true,
-            "pageLength": 25,
-            "order": [[ 2, "asc" ]],
-            "initComplete": function(settings, json) {
-                // Quita la clase de carga para hacer la tabla visible
-                $('#tabla-codigos-cierre').removeClass('data-table-loading');
-            },
-            "drawCallback": function(settings) {
-                var totalRegistros = {{ total_registros|default:0 }};
-                var totalInfo = '<div class="total-records-info">Total de registros existentes: <strong>' + totalRegistros + '</strong></div>';
-                if ($('#tabla-aplicaciones_info .total-records-info').length === 0) {
-                    $('#tabla-aplicaciones_info').append(totalInfo);
-                }
-            }
-        });
-    });
-</script>
+<script src="{% static 'gestion/js/aplicaciones.js' %}"></script>
 {% endblock extra_scripts %}

@@ -13,14 +13,34 @@ from ..models import CodigoCierre, Aplicacion
 @login_required
 @no_cache
 def codigos_cierre_view(request):
-    """Muestra la lista de códigos de cierre."""
+    """Muestra la lista de códigos de cierre y permite filtrarlos."""
     logger.info(
         f"El usuario '{request.user}' está viendo la lista de códigos de cierre.")
-    codigos = CodigoCierre.objects.select_related('aplicacion').all()
-    total_registros = codigos.count()
+
+    # 1. Queryset base optimizado
+    codigos_qs = CodigoCierre.objects.select_related('aplicacion').all()
+
+    # 2. Obtener valores de los filtros desde la URL (request.GET)
+    filtro_codigo = request.GET.get('codigo_cierre')
+    filtro_app_id = request.GET.get('aplicacion')
+
+    # 3. Aplicar filtros al queryset
+    if filtro_codigo:
+        codigos_qs = codigos_qs.filter(cod_cierre__icontains=filtro_codigo)
+
+    if filtro_app_id and filtro_app_id.isdigit():
+        codigos_qs = codigos_qs.filter(aplicacion_id=filtro_app_id)
+
+    # 4. Obtener datos para los menús desplegables de los filtros
+    todas_las_aplicaciones = Aplicacion.objects.all().order_by('nombre_aplicacion')
+
+    # 5. Contar el total de registros para la info de la tabla
+    total_registros = CodigoCierre.objects.count()
+
     context = {
-        'lista_de_codigos': codigos,
+        'lista_de_codigos': codigos_qs,
         'total_registros': total_registros,
+        'todas_las_aplicaciones': todas_las_aplicaciones,
     }
     return render(request, 'gestion/cod_cierre.html', context)
 
