@@ -103,13 +103,13 @@ $(document).ready(function() {
         ],
         "columnDefs": [
             // --- Definición de Anchos de Columna ---
-            { "width": "3%", "targets": [0, 1, 2, 7] }, // Íconos Eliminar, Checkbox, Editar
+            { "width": "2%", "targets": [0, 1, 2] }, // Íconos Eliminar, Checkbox, Editar
             { "width": "4%", "targets": [] }, // Cod. Aplicativo, Cod. Cierre
             { "width": "5%", "targets": [3, 8, 9] }, // Cod. Aplicativo, Cod. Cierre
             { "width": "6%", "targets": [11] }, // Incidencia
-            { "width": "8%", "targets": [4, 6, 10, 14] }, // Estado, Severidad, Cumple SLA
-            { "width": "10%", "targets": [5, 15] }, // Usuario, Fechas, Tiempo SLA
-            { "width": "12%", "targets": [] }, // Aplicativo, Bloque, Grupo Resolutor
+            { "width": "8%", "targets": [10, 14] }, // Estado, Severidad, Cumple SLA
+            { "width": "10%", "targets": [5] }, // Usuario, Fechas, Tiempo SLA
+            { "width": "12%", "targets": [15] }, // Aplicativo, Bloque, Grupo Resolutor
             { "width": "14%", "targets": [12, 13] }
 
         ],
