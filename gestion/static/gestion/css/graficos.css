@@ -1,76 +1,198 @@
-.dashboard-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    justify-content: center;
-    padding-top: 20px;
-}
+/* gestion/static/gestion/css/graficos.css */
 
-.chart-card {
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    padding: 20px;
+
+/* --- INICIO: Estilos de Layout de Página --- */
+
+
+/* Estos estilos aseguran que el contenedor principal ocupe el ancho completo,
+   permitiendo que los filtros se distribuyan horizontalmente. */
+
+.page-container {
     width: 100%;
-    max-width: 600px;
-    /* Ancho máximo para cada gráfico */
+    margin: 20px 0;
+    padding: 10px 25px;
+    box-sizing: border-box;
 }
 
-.chart-container {
-    position: relative;
-    height: 40vh;
-    /* Altura del contenedor del gráfico */
+.page-header {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 15px;
 }
+
+.page-title {
+    color: var(--color-blanco);
+    font-weight: 400;
+    margin-bottom: 25px;
+}
+
+
+/* --- FIN: Estilos de Layout de Página --- */
+
+
+/* --- INICIO: Estilos de Filtros (Unificados) --- */
+
+
+/* Estilos para la caja de filtros, consistentes con otras páginas (aplicaciones.css) */
+
+.filter-box {
+    background-color: var(--color-morado);
+    border: 1px solid var(--color-purpura);
+    border-radius: 8px;
+    padding: 20px 25px;
+    margin-bottom: 25px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+
+.filter-header h3 {
+    margin: 0;
+    color: var(--color-blanco);
+    font-weight: 400;
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.filter-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.9em;
+    color: var(--color-texto-secundario);
+}
+
+.filter-group select,
+.filter-group input[type="date"] {
+    width: 100%;
+    font-size: 1em;
+    padding: 10px;
+    background-color: var(--color-morado-oscuro);
+    color: var(--color-blanco);
+    border: 1px solid var(--color-texto-secundario);
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.filter-actions {
+    margin-top: 20px;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.btn.filter-btn {
+    background-color: var(--color-purpura);
+    color: var(--color-blanco);
+    padding: 10px 30px;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-secondary {
+    background-color: transparent;
+    color: var(--color-gris-ceramica);
+    padding: 8px 15px;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background-color: var(--color-purpura);
+    color: var(--color-blanco);
+    border-color: var(--color-purpura);
+}
+
+
+/*
+  Esta es la regla clave, idéntica a la de aplicaciones.css.
+  Proporciona la estructura necesaria para que la animación slideDown() de jQuery funcione.
+*/
+
+#filter-container {
+    padding-top: 20px;
+    margin-top: 20px;
+    border-top: 1px solid var(--color-purpura);
+}
+
+
+/* --- FIN: Estilos de Filtros --- */
+
+
+/* --- INICIO: Estilos de Tarjetas de Estadísticas y Gráficos (Originales) --- */
 
 .stats-container {
     display: flex;
     justify-content: center;
     gap: 20px;
     margin-bottom: 25px;
-    padding: 0 20px;
+    flex-wrap: wrap;
 }
 
 .stat-card {
-    background-color: #0056b3;
-    /* Un color azul oscuro para destacar */
-    color: #fff;
+    background-color: var(--color-morado);
+    border: 1px solid var(--color-purpura);
+    color: var(--color-blanco);
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     padding: 10px 15px;
+    /* Reducimos el relleno interno */
     text-align: center;
-    min-width: 190px;
+    width: 280px;
+    /* Les damos un ancho fijo */
+    flex-grow: 0;
+    /* Evitamos que crezcan para llenar el espacio */
 }
 
 .stat-card h4 {
     margin: 0 0 10px 0;
     font-weight: 400;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
+    /* Reducimos el tamaño del título */
+    color: var(--color-texto-secundario);
 }
 
 .stat-card .stat-value {
     margin: 0;
-    font-size: 2.0em;
+    font-size: 2em;
+    /* Reducimos el tamaño del número */
     font-weight: 700;
+    color: var(--color-gris-ceramica);
 }
 
-.stat-card-filtered {
-    background-color: #007bff;
-    /* Un azul un poco más claro para diferenciar */
+.dashboard-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 20px;
+    padding-top: 20px;
+}
+
+.chart-card {
+    background-color: var(--color-morado);
+    border: 1px solid var(--color-purpura);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+.chart-container {
+    position: relative;
+    height: 45vh;
+    min-height: 350px;
 }
 
 
-/* --- ESTILOS PARA AJUSTAR EL TAMAÑO DE LOS FILTROS --- */
-
-.filter-grid {
-    /* Hacemos las columnas de los filtros un poco más angostas. */
-    /* Puedes ajustar el valor '240px' a uno menor si los quieres aún más pequeños. */
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-}
-
-.filter-group select,
-.filter-group input[type="date"] {
-    font-size: 0.85rem;
-    /* Reducimos un poco el tamaño de la fuente para un look más compacto */
-    padding: 8px;
-    /* Reducimos el relleno para hacerlos más bajos */
-}
+/* --- FIN: Estilos de Tarjetas --- */

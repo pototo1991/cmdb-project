@@ -79,13 +79,17 @@ class Aplicacion(models.Model):
 
 
 class CodigoCierre(models.Model):
-    cod_cierre = models.CharField(max_length=50, unique=True)
+    cod_cierre = models.CharField(max_length=50)
     desc_cod_cierre = models.CharField(max_length=255, blank=True, null=True)
     causa_cierre = models.TextField(blank=True, null=True)
 
     # Relación
     aplicacion = models.ForeignKey(
         Aplicacion, on_delete=models.CASCADE, related_name='codigos_cierre')
+
+    class Meta:
+        # Asegura que la combinación de código y aplicación sea única.
+        unique_together = ('cod_cierre', 'aplicacion')
 
     def __str__(self):
         return self.cod_cierre

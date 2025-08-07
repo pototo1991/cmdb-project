@@ -1,120 +1,121 @@
 {% extends 'gestion/base.html' %}
 {% load static %}
 
-{% block title %}Dashboard de Gráficos - CMDB{% endblock %}
+{% block title %}Dashboard de Incidencias{% endblock %}
 
 {% block extra_css %}
-    {# Reutilizamos los estilos que ya tienes para mantener la consistencia #}
-    <link rel="stylesheet" href="{% static 'gestion/css/listado_tablas.css' %}">
-    <link rel="stylesheet" href="{% static 'gestion/css/incidencia.css' %}">
-    <link rel="stylesheet" href="{% static 'gestion/css/graficos.css' %}">
+<link rel="stylesheet" href="{% static 'gestion/css/graficos.css' %}">
 {% endblock %}
 
-{% block content %}
-<div class="page-container">
-    <h1 class="page-title">Dashboard de Gráficos</h1>
+{% block extra_nav_buttons %}
+    {% include 'gestion/_extra_nav_buttons.html' %}
+{% endblock extra_nav_buttons %}
 
-    {# Estructura de filtros #}
-    <form id="graficos-filters-form" method="get" action="">
-        <div class="filter-box">
-            <div class="filter-header">
-                <h3>Filtros de Búsqueda</h3>
-            </div>
-            <div id="filter-container" style="display: block;">
+{% block content %}
+<div class="page-container" 
+     data-url-graficos-data="{% url 'gestion:graficos_data' %}" 
+     data-url-codigos-cierre="{% url 'gestion:codigos_cierre_por_aplicativo' %}">
+
+    <div class="page-header">
+        <h1 class="page-title">Dashboard de Incidencias</h1>
+    </div>
+
+    <div class="filter-box">
+        <div class="filter-header" id="toggle-filters-header">
+            <h3>Filtros de Búsqueda</h3>
+            <button id="toggle-filters-btn" class="btn-secondary" type="button">Mostrar Filtros</button>
+        </div>
+        <div id="filter-container" style="display: none;">
+            <form id="graficos-filters-form">
                 <div class="filter-grid">
+
                     <div class="filter-group">
-                        <label for="aplicativo">Aplicativo:</label>
-                        <select id="aplicativo" name="aplicativo">
+                        <label for="aplicativo">Aplicativo</label>
+                        <select name="aplicativo" id="aplicativo" class="form-control">
                             <option value="">Todos</option>
                             {% for app in aplicaciones %}
                                 <option value="{{ app.id }}">{{ app.nombre_aplicacion }}</option>
                             {% endfor %}
                         </select>
                     </div>
+
                     <div class="filter-group">
-                        <label for="bloque">Bloque:</label>
-                        <select id="bloque" name="bloque">
+                        <label for="codigo_cierre">Código de Cierre</label>
+                        <select name="codigo_cierre" id="codigo_cierre" class="form-control">
                             <option value="">Todos</option>
-                            {% for bloque in bloques %}
-                                <option value="{{ bloque.id }}">{{ bloque.desc_bloque }}</option>
-                            {% endfor %}
+                            {# Las opciones se cargarán con JavaScript #}
                         </select>
                     </div>
+
                     <div class="filter-group">
-                        <label for="codigo_cierre">Código de Cierre:</label>
-                        <select id="codigo_cierre" name="codigo_cierre">
-                            <option value="">Todos</option>
-                            {% for codigo in codigos_cierre %}
-                                <option value="{{ codigo.id }}">{{ codigo.cod_cierre }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label for="severidad">Severidad:</label>
-                        <select id="severidad" name="severidad">
+                        <label for="severidad">Severidad</label>
+                        <select name="severidad" id="severidad" class="form-control">
                             <option value="">Todas</option>
                             {% for sev in severidades %}
                                 <option value="{{ sev.id }}">{{ sev.desc_severidad }}</option>
                             {% endfor %}
                         </select>
                     </div>
+
                     <div class="filter-group">
-                        <label for="usuario">Usuario Asignado:</label>
-                        <select id="usuario" name="usuario">
+                        <label for="bloque">Bloque</label>
+                        <select name="bloque" id="bloque" class="form-control">
                             <option value="">Todos</option>
-                            {% for usuario in usuarios %}
-                                <option value="{{ usuario.id }}">{{ usuario.nombre }}</option>
+                            {% for b in bloques %}
+                                <option value="{{ b.id }}">{{ b.desc_bloque }}</option>
                             {% endfor %}
                         </select>
                     </div>
+
                     <div class="filter-group">
-                        <label for="year">Año:</label>
-                        <select id="year" name="year">
+                        <label for="usuario">Usuario Asignado</label>
+                        <select name="usuario" id="usuario" class="form-control">
+                            <option value="">Todos</option>
+                            {% for u in usuarios %}
+                                <option value="{{ u.id }}">{{ u.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="fecha_desde">Fecha Desde</label>
+                        <input type="date" name="fecha_desde" id="fecha_desde" class="form-control">
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="fecha_hasta">Fecha Hasta</label>
+                        <input type="date" name="fecha_hasta" id="fecha_hasta" class="form-control">
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="year">Año</label>
+                        <select name="year" id="year" class="form-control">
                             <option value="">Todos</option>
                             {% for y in years %}
                                 <option value="{{ y.year }}">{{ y.year }}</option>
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="filter-group">
-                        <label for="month">Mes:</label>
-                        <select id="month" name="month">
-                            <option value="">Todos</option>
-                            {% for m in months %}
-                                <option value="{{ m.value }}">{{ m.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label for="fecha_desde">Fecha Cierre (Desde):</label>
-                        <input type="date" id="fecha_desde" name="fecha_desde">
-                    </div>
-                    <div class="filter-group">
-                        <label for="fecha_hasta">Fecha Cierre (Hasta):</label>
-                        <input type="date" id="fecha_hasta" name="fecha_hasta">
-                    </div>
+
                 </div>
                 <div class="filter-actions">
-                    <button type="submit" class="btn filter-btn">Actualizar Gráficos</button>
-                    <button type="button" id="limpiar-filtros-btn" class="btn filter-btn">Limpiar Filtros</button>
+                    <button type="submit" class="btn filter-btn">Aplicar Filtros</button>
+                    <button type="button" id="limpiar-filtros-btn" class="btn filter-btn">Limpiar</button>
                 </div>
-            </div>
+            </form>
         </div>
-    </form>
-
-    {# Contenedor para las viñetas/tarjetas de estadísticas #}
+    </div>
     <div class="stats-container">
         <div class="stat-card">
-            <h4>Total Incidencias (BD)</h4>
+            <h4>Total General Incidencias</h4>
             <p id="total-general-valor" class="stat-value">0</p>
         </div>
-        <div class="stat-card stat-card-filtered">
-            <h4>Incidencias Filtradas</h4>
+        <div class="stat-card">
+            <h4>Total Incidencias (Filtrado)</h4>
             <p id="total-filtrado-valor" class="stat-value">0</p>
         </div>
     </div>
 
-    {# Contenedores para los gráficos #}
     <div class="dashboard-container">
         <div class="chart-card">
             <div class="chart-container">
@@ -138,131 +139,10 @@
         </div>
     </div>
 </div>
-{% endblock content %}
+{% endblock %}
 
 {% block extra_scripts %}
-<script>
-$(document).ready(function() {
-    let chartAplicativo = null;
-    let chartPorMes = null;
-    let chartSeveridad = null;
-    let chartPorCodigoCierre = null;
-
-    function renderChart(canvasId, chartInstance, chartData, chartTitle, datasetLabel, chartType = 'bar') {
-        const ctx = document.getElementById(canvasId).getContext('2d');
-        if (chartInstance) {
-            chartInstance.destroy();
-        }
-        
-        const isPieOrDoughnut = ['pie', 'doughnut'].includes(chartType);
-        const isLineOrBar = ['line', 'bar'].includes(chartType);
-
-        return new Chart(ctx, {
-            type: chartType,
-            data: {
-                labels: chartData.labels,
-                datasets: [{
-                    label: datasetLabel,
-                    data: chartData.values,
-                    backgroundColor: isPieOrDoughnut 
-                        ? ['#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'] 
-                        : (chartType === 'line' ? 'rgba(75, 192, 192, 0.2)' : 'rgba(54, 162, 235, 0.6)'),
-                    borderColor: isPieOrDoughnut 
-                        ? '#fff' 
-                        : (chartType === 'line' ? 'rgba(75, 192, 192, 1)' : 'rgba(54, 162, 235, 1)'),
-                    borderWidth: 1,
-                    fill: chartType === 'line', // Rellenar el área bajo la línea
-                    tension: 0.1 // Suavizar la línea
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: isLineOrBar ? { y: { beginAtZero: true, ticks: { precision: 0 } } } : {},
-                plugins: {
-                    title: {
-                        display: true,
-                        text: chartTitle,
-                        font: {
-                            size: 18
-                        },
-                        padding: {
-                            bottom: 20
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    function actualizarGraficos() {
-        const form = $('#graficos-filters-form');
-        const url = `{% url 'gestion:graficos_data_json' %}?${form.serialize()}`;
-        
-        $('#loading-spinner').show();
-
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                // Actualizar las viñetas con los totales
-                $('#total-general-valor').text(data.total_general.toLocaleString('es-ES'));
-                $('#total-filtrado-valor').text(data.total_filtrado.toLocaleString('es-ES'));
-
-                chartAplicativo = renderChart('chartPorAplicativo', chartAplicativo, data.por_aplicativo, 'Incidencias por Aplicativo (Top 15)', 'Nº de Incidencias', 'bar');
-                chartPorMes = renderChart('chartPorMes', chartPorMes, data.por_mes, 'Incidencias por Mes', 'Nº de Incidencias', 'doughnut');
-                chartSeveridad = renderChart('chartPorSeveridad', chartSeveridad, data.por_severidad, 'Incidencias por Severidad', 'Nº de Incidencias', 'pie');
-                chartPorCodigoCierre = renderChart('chartPorCodigoCierre', chartPorCodigoCierre, data.por_codigo_cierre, 'Top 15 Códigos de Cierre', 'Nº de Incidencias', 'bar');
-                $('#loading-spinner').hide();
-            })
-            .catch(error => {
-                console.error('Error al cargar datos de los gráficos:', error);
-                $('#loading-spinner').hide();
-                alert('No se pudieron cargar los datos para los gráficos.');
-            });
-    }
-
-    $('#graficos-filters-form').on('submit', function(e) {
-        e.preventDefault();
-        actualizarGraficos();
-    });
-
-    $('#limpiar-filtros-btn').on('click', function() {
-        $('#graficos-filters-form')[0].reset();
-        actualizarGraficos();
-    });
-
-    // Carga inicial de los gráficos
-    actualizarGraficos();
-
-    // --- INICIO: LÓGICA PARA FILTROS DEPENDIENTES ---
-    $('#aplicativo').on('change', function() {
-        const aplicativoId = $(this).val();
-        const codigoCierreSelect = $('#codigo_cierre');
-        const url = `{% url 'gestion:get_codigos_cierre_graficos' %}?aplicativo_id=${aplicativoId}`;
-
-        // Mostrar un estado de carga en el select de códigos de cierre
-        codigoCierreSelect.html('<option value="">Cargando...</option>').prop('disabled', true);
-
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                // Limpiar el select y habilitarlo
-                codigoCierreSelect.html('').prop('disabled', false);
-                
-                // Añadir la opción "Todos"
-                codigoCierreSelect.append('<option value="">Todos</option>');
-
-                // Poblar con los nuevos códigos de cierre
-                data.codigos.forEach(function(codigo) {
-                    codigoCierreSelect.append($('<option></option>').val(codigo.id).text(codigo.text));
-                });
-            })
-            .catch(error => {
-                console.error('Error al cargar los códigos de cierre:', error);
-                codigoCierreSelect.html('<option value="">Error al cargar</option>').prop('disabled', true);
-            });
-    });
-    // --- FIN: LÓGICA PARA FILTROS DEPENDIENTES ---
-});
-</script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <!-- jQuery y Chart.js ya se cargan desde base.html. -->
+    <script src="{% static 'gestion/js/graficos.js' %}"></script>
 {% endblock extra_scripts %}

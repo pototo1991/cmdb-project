@@ -1,6 +1,7 @@
 # gestion/views/graficos.py
 
 from django.shortcuts import render
+from datetime import datetime, timedelta
 from django.http import JsonResponse
 from django.db.models import Count
 from django.db.models.functions import TruncMonth
@@ -17,14 +18,21 @@ def get_filtered_incidencias(request):
         'aplicacion', 'estado', 'bloque', 'severidad', 'codigo_cierre', 'usuario_asignado'
     ).all()
 
+    # --- Aplicar filtros ---
     if aplicativo_id := request.GET.get('aplicativo'):
         queryset = queryset.filter(aplicacion_id=aplicativo_id)
     if bloque_id := request.GET.get('bloque'):
         queryset = queryset.filter(bloque_id=bloque_id)
-    if fecha_desde := request.GET.get('fecha_desde'):
-        queryset = queryset.filter(fecha_ultima_resolucion__gte=fecha_desde)
-    if fecha_hasta := request.GET.get('fecha_hasta'):
-        queryset = queryset.filter(fecha_ultima_resolucion__lte=fecha_hasta)
+    if fecha_desde_str := request.GET.get('fecha_desde'):
+        if fecha_desde := _parse_date(fecha_desde_str):
+            queryset = queryset.filter(
+                fecha_ultima_resolucion__gte=fecha_desde)
+    if fecha_hasta_str := request.GET.get('fecha_hasta'):
+        if fecha_hasta := _parse_date(fecha_hasta_str):
+            # Incluir todo el día de la fecha 'hasta'
+            fecha_hasta_fin_dia = fecha_hasta + timedelta(days=1)
+            queryset = queryset.filter(
+                fecha_ultima_resolucion__lt=fecha_hasta_fin_dia)
     if severidad_id := request.GET.get('severidad'):
         queryset = queryset.filter(severidad_id=severidad_id)
     if year := request.GET.get('year'):
@@ -37,6 +45,16 @@ def get_filtered_incidencias(request):
         queryset = queryset.filter(usuario_asignado_id=usuario_id)
 
     return queryset
+
+
+def _parse_date(date_string):
+    """Función auxiliar para parsear fechas de forma segura."""
+    if not date_string:
+        return None
+    try:
+        return datetime.strptime(date_string, '%Y-%m-%d').date()
+    except (ValueError, TypeError):
+        return None
 
 
 @login_required
@@ -132,14 +150,14 @@ def graficos_data_json(request):
     chart_data = {
         'total_general': total_general_incidencias,
         'total_filtrado': total_filtrado_incidencias,
-        'por_aplicativo': {'labels': [item['aplicacion__nombre_aplicacion'] or "No Asignado" for item in data_aplicativo], 'values': [item['total'] for item in data_aplicativo]},
+        'por_aplicativo': {'labels': [item.get('aplicacion__nombre_aplicacion') or "No Asignado" for item in data_aplicativo], 'values': [item['total'] for item in data_aplicativo]},
         'por_mes': {
-            'labels': [f"{meses_es.get(item['mes'].month, '')} {item['mes'].year}" for item in data_por_mes if item['mes']],
-            'values': [item['total'] for item in data_por_mes if item['mes']]
+            'labels': [f"{meses_es.get(item['mes'].month, '')} {item['mes'].year}" for item in data_por_mes if item.get('mes')],
+            'values': [item['total'] for item in data_por_mes if item.get('mes')]
         },
-        'por_severidad': {'labels': [item['severidad__desc_severidad'] or "Sin Severidad" for item in data_severidad], 'values': [item['total'] for item in data_severidad]},
+        'por_severidad': {'labels': [item.get('severidad__desc_severidad') or "Sin Severidad" for item in data_severidad], 'values': [item['total'] for item in data_severidad]},
         'por_codigo_cierre': {
-            'labels': [item['codigo_cierre__cod_cierre'] or "No Asignado" for item in data_codigos_cierre],
+            'labels': [item.get('codigo_cierre__cod_cierre') or "No Asignado" for item in data_codigos_cierre],
             'values': [item['total'] for item in data_codigos_cierre]
         }
     }

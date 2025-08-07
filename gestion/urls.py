@@ -58,8 +58,8 @@ urlpatterns = [
 
     # Nuevas rutas para la página de gráficos y su endpoint de datos
     path('graficos/', views.graficos_view, name='graficos'),
-    path('graficos/data/', views.graficos_data_json, name='graficos_data_json'),
-    path('ajax/get-codigos-cierre-graficos/',
-         views.get_codigos_cierre_ajax, name='get_codigos_cierre_graficos'),
+    path('graficos/data/', views.graficos_data_json, name='graficos_data'),
+    path('graficos/codigos-cierre-por-aplicativo/',
+         views.get_codigos_cierre_ajax, name='codigos_cierre_por_aplicativo'),
 
 ]

@@ -4,7 +4,7 @@ $(document).ready(function() {
     // Obtenemos el total de registros desde el atributo data del contenedor
     const totalRegistrosDB = $('.page-container').data('total-registros') || 0;
 
-    $('#tabla-codigos-cierre').DataTable({
+    var table = $('#tabla-codigos-cierre').DataTable({
         "language": {
             "lengthMenu": "Mostrar _MENU_ registros por página",
             "zeroRecords": "No se encontraron resultados",
@@ -43,17 +43,13 @@ $(document).ready(function() {
         "drawCallback": function(settings) {
             var api = this.api();
             var filteredCount = api.page.info().recordsDisplay;
-            var infoContainer = $('#tabla-codigos-cierre_info');
 
             // Usamos la variable JS que obtuvimos del HTML
-            var filteredInfo = '<div class="filtered-records-info">Registros encontrados (filtrados): <strong>' + filteredCount + '</strong></div>';
-            var totalInfo = '<div class="total-records-info">Total de registros existentes: <strong>' + totalRegistrosDB + '</strong></div>';
-
-            infoContainer.find('.filtered-records-info').remove();
-            infoContainer.find('.total-records-info').remove();
-
-            infoContainer.append(totalInfo);
-            infoContainer.append(filteredInfo);
+            const infoHtml = `
+                <div class="total-records-info">Total de registros existentes: <strong>${totalRegistrosDB}</strong></div>
+                <div class="filtered-records-info">Registros encontrados (filtrados): <strong>${filteredCount}</strong></div>
+            `;
+            $('#tabla-codigos-cierre_info').html(infoHtml);
         }
     });
 

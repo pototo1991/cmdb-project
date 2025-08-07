@@ -7,13 +7,11 @@
 
 {# Este bloque inyectará los botones en el navbar de base.html #}
 {% block extra_nav_buttons %}
-    <a href="{% url 'gestion:incidencias' %}" class="navbar-link link-con-spinner">Listado Incidencias</a>
-    <a href="{% url 'gestion:codigos_cierre' %}" class="navbar-link link-con-spinner">Mantenedor Códigos de Cierre</a>
-    <a href="{% url 'gestion:aplicaciones' %}" class="navbar-link link-con-spinner">Mantenedor Aplicaciones</a>
+    {% include 'gestion/_extra_nav_buttons.html' %}
 {% endblock extra_nav_buttons %}
 
 {% block content %}
-<div class="main-content">
+
     <h1>Visor de Logs</h1>
 
     <div class="action-buttons-container" style="margin-bottom: 20px;">
@@ -26,5 +24,5 @@
         <p>Mostrando las últimas 800 líneas:</p>
         <pre class="log-content">{{ log_content }}</pre>
     </div>
-</div>
+
 {% endblock content %}
