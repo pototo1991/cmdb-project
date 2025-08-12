@@ -2,7 +2,7 @@
 
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from . import views
+from . import views  # Importa el paquete de vistas completo
 
 app_name = 'gestion'
 
@@ -61,5 +61,62 @@ urlpatterns = [
     path('graficos/data/', views.graficos_data_json, name='graficos_data'),
     path('graficos/codigos-cierre-por-aplicativo/',
          views.get_codigos_cierre_ajax, name='codigos_cierre_por_aplicativo'),
+
+    path('mantenedores/', views.mantenedores_main,
+         name='mantenedores_main'),
+
+    # === NUEVAS RUTAS PARA LOS MANTENEDORES ===
+    path('usuarios/', views.listar_usuarios, name='listar_usuarios'),
+    path('usuarios/registrar/', views.registrar_usuario,
+         name='registrar_usuario'),
+    path('usuarios/editar/<int:pk>/',
+         views.editar_usuario, name='editar_usuario'),
+    path('usuarios/eliminar/<int:pk>/',
+         views.eliminar_usuario, name='eliminar_usuario'),
+
+    path('estados/', views.listar_estados, name='listar_estados'),
+    path('estados/registrar/', views.registrar_estado,
+         name='registrar_estado'),
+    path('estados/editar/<int:pk>/',
+         views.editar_estado, name='editar_estado'),
+    path('estados/eliminar/<int:pk>/',
+         views.eliminar_estado, name='eliminar_estado'),
+
+    path('grupos-resolutores/',
+         views.listar_grupos, name='listar_grupos'),
+    path('grupos-resolutores/registrar/',
+         views.registrar_grupo, name='registrar_grupo'),
+    path('grupos-resolutores/editar/<int:pk>/',
+         views.editar_grupo, name='editar_grupo'),
+    path('grupos-resolutores/eliminar/<int:pk>/',
+         views.eliminar_grupo, name='eliminar_grupo'),
+
+    path('reglas-sla/', views.listar_reglas_sla,
+         name='listar_reglas_sla'),
+    path('reglas-sla/registrar/', views.registrar_regla_sla,
+         name='registrar_regla_sla'),
+    path('reglas-sla/editar/<int:pk>/',
+         views.editar_regla_sla, name='editar_regla_sla'),
+    path('reglas-sla/eliminar/<int:pk>/',
+         views.eliminar_regla_sla, name='eliminar_regla_sla'),
+
+    path('dias-feriados/', views.listar_dias_feriados,
+         name='listar_dias_feriados'),
+    path('dias-feriados/registrar/',
+         views.registrar_dia_feriado, name='registrar_dia_feriado'),
+    path('dias-feriados/editar/<int:pk>/',
+         views.editar_dia_feriado, name='editar_dia_feriado'),
+    path('dias-feriados/eliminar/<int:pk>/',
+         views.eliminar_dia_feriado, name='eliminar_dia_feriado'),
+
+    path('horarios-laborales/', views.listar_horarios_laborales,
+         name='listar_horarios_laborales'),
+    path('horarios-laborales/registrar/',
+         views.registrar_horario_laboral, name='registrar_horario_laboral'),
+    path('horarios-laborales/editar/<int:pk>/',
+         views.editar_horario_laboral, name='editar_horario_laboral'),
+    path('horarios-laborales/eliminar/<int:pk>/',
+         views.eliminar_horario_laboral, name='eliminar_horario_laboral'),
+
 
 ]

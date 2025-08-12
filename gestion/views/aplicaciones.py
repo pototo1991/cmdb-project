@@ -230,6 +230,7 @@ def carga_masiva_view(request):
 
             success_count = 0
             failed_rows = []
+            skipped_count = 0
 
             for line_number, row in enumerate(all_rows, start=2):
                 try:
@@ -268,7 +269,7 @@ def carga_masiva_view(request):
                     estado_obj = Estado.objects.get(
                         desc_estado__iexact=estado_str) if estado_str else None
 
-                    Aplicacion.objects.update_or_create(
+                    obj, created = Aplicacion.objects.get_or_create(
                         id=id_aplicacion_pk,
                         defaults={
                             'cod_aplicacion': cod_aplicacion,
@@ -276,10 +277,20 @@ def carga_masiva_view(request):
                             'bloque': bloque_obj,
                             'criticidad': criticidad_obj,
                             'estado': estado_obj,
-                            'desc_aplicacion': row.get('descripcion', '').strip()
+                            'desc_aplicacion': row.get('descripcion', '').strip(),
                         }
                     )
-                    success_count += 1
+
+                    if created:
+                        success_count += 1
+                        logger.info(
+                            f"APLICACIÓN CREADA: Código='{cod_aplicacion}', Nombre='{nombre_aplicacion}' (ID: {id_aplicacion_pk})."
+                        )
+                    else:
+                        skipped_count += 1
+                        logger.info(
+                            f"APLICACIÓN OMITIDA (ya existe): ID={id_aplicacion_pk}, Código='{obj.cod_aplicacion}', Nombre='{obj.nombre_aplicacion}'."
+                        )
 
                 except Exception as e:
                     failed_rows.append({
@@ -295,8 +306,9 @@ RESUMEN DE CARGA MASIVA DE APLICACIONES
 Usuario: {request.user}
 Archivo: {csv_file.name}
 --------------------------------------------------
-Total de filas en el archivo: {total_records_in_file}
-Cargados/Actualizados con éxito: {success_count}
+Total de filas leídas: {total_records_in_file}
+Aplicaciones nuevas creadas: {success_count}
+Aplicaciones omitidas (ya existían): {skipped_count}
 Filas con errores: {len(failed_rows)}
 --------------------------------------------------"""
 
@@ -310,7 +322,10 @@ Filas con errores: {len(failed_rows)}
 
             if success_count > 0:
                 messages.success(
-                    request, f'¡Carga completada! Se procesaron {success_count} aplicaciones con éxito.')
+                    request, f'¡Carga completada! Se crearon {success_count} aplicaciones nuevas.')
+            if skipped_count > 0:
+                messages.info(
+                    request, f'Se omitieron {skipped_count} aplicaciones que ya existían.')
             if failed_rows:
                 messages.warning(
                     request, f'Se encontraron {len(failed_rows)} errores. Revisa los detalles en el log del sistema.')
@@ -319,6 +334,7 @@ Filas con errores: {len(failed_rows)}
                 'failed_rows': failed_rows,
                 'stats': {
                     'total': total_records_in_file,
+                    'skipped': skipped_count,
                     'success': success_count,
                     'failed': len(failed_rows)
                 }

@@ -11,7 +11,8 @@ const dashboardModule = {
         aplicativo: null,
         porMes: null,
         severidad: null,
-        porCodigoCierre: null
+        porCodigoCierre: null,
+        porIndraD: null
     },
 
     // URLs que necesita esta página específica
@@ -28,7 +29,8 @@ const dashboardModule = {
         porCodigoCierre: {
             backgroundColor: 'rgba(0, 128, 128, 0.2)',
             borderColor: 'rgba(0, 128, 128, 1)'
-        }
+        },
+        porIndraD: ['#ff6384', '#36a2eb']
     },
 
     // Punto de entrada para la lógica del dashboard
@@ -157,7 +159,17 @@ const dashboardModule = {
                         display: function(context) {
                             return context.dataset.data[context.dataIndex] > 0;
                         },
-                        formatter: (value) => new Intl.NumberFormat('es-ES').format(value),
+                        formatter: (value, context) => {
+                            // Para gráficos de torta o dona, mostramos el valor y el porcentaje.
+                            const isRadial = ['pie', 'doughnut'].includes(context.chart.config.type);
+                            if (isRadial) {
+                                const sum = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                if (sum === 0) return '0 (0.00%)';
+                                const percentage = (value * 100 / sum).toFixed(2) + "%";
+                                return `${value}\n(${percentage})`;
+                            }
+                            return new Intl.NumberFormat('es-ES').format(value);
+                        },
                         color: '#FFFFFF',
                         font: function(context) {
                             const isRadial = ['pie', 'doughnut', 'polarArea'].includes(context.chart.config.type);
@@ -215,6 +227,9 @@ const dashboardModule = {
                 }
                 if (data && data.por_codigo_cierre) {
                     this.renderChart('chartPorCodigoCierre', 'porCodigoCierre', data.por_codigo_cierre, 'Top 15 Códigos de Cierre', 'Nº de Incidencias', this.colors.porCodigoCierre, 'line');
+                }
+                if (data && data.por_indra_d) {
+                    this.renderChart('chartPorIndraD', 'porIndraD', data.por_indra_d, 'Incidencias por Grupo INDRA_D vs. Otros', 'Nº de Incidencias', this.colors.porIndraD, 'pie');
                 }
 
                 if (spinner) spinner.style.display = 'none';

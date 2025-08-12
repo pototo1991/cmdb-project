@@ -174,10 +174,19 @@
 }
 
 .dashboard-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    /* Hacemos que este contenedor use flexbox para apilar sus hijos (las filas) verticalmente. */
+    display: flex;
+    flex-direction: column;
     gap: 20px;
+    /* Espacio entre las filas de gráficos */
     padding-top: 20px;
+    width: 100%;
+}
+
+.chart-row {
+    display: flex;
+    gap: 20px;
+    /* Espacio entre los gráficos de una misma fila */
 }
 
 .chart-card {
@@ -186,6 +195,10 @@
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     padding: 20px;
+    flex: 1 1 30%;
+    /* Permite que las tarjetas crezcan y se encojan, con una base de ~33% */
+    min-width: 350px;
+    /* Ancho mínimo antes de que los gráficos se reorganicen */
 }
 
 .chart-container {

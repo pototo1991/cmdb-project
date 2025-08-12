@@ -46,7 +46,14 @@ class Impacto(models.Model):
 
 
 class Estado(models.Model):
+    class UsoChoices(models.TextChoices):
+        INCIDENCIA = 'Incidencia', 'Incidencia'
+        APLICACION = 'Aplicacion', 'Aplicacion'
+
     desc_estado = models.CharField(max_length=100, unique=True)
+    uso_estado = models.CharField(
+        max_length=50, choices=UsoChoices.choices, blank=True, verbose_name="Uso del Estado",
+        help_text="Selecciona dónde se utiliza principalmente este estado.")
 
     def __str__(self):
         return self.desc_estado
@@ -80,8 +87,8 @@ class Aplicacion(models.Model):
 
 class CodigoCierre(models.Model):
     cod_cierre = models.CharField(max_length=50)
-    desc_cod_cierre = models.CharField(max_length=255, blank=True, null=True)
-    causa_cierre = models.TextField(blank=True, null=True)
+    desc_cod_cierre = models.TextField(blank=True, default='')
+    causa_cierre = models.TextField(blank=True, default='')
 
     # Relación
     aplicacion = models.ForeignKey(
@@ -194,9 +201,10 @@ class Usuario(models.Model):
     # El nombre de la tabla en la base de datos será 'gestion_usuario' por defecto.
     usuario = models.CharField(max_length=150, unique=True)
     nombre = models.CharField(max_length=255)
+    habilitado = models.BooleanField(default=True, verbose_name="Habilitado")
 
     def __str__(self):
-        return self.usuario
+        return f"{self.usuario}{'' if self.habilitado else ' (Deshabilitado)'}"
 
 
 class ReglaSLA(models.Model):
@@ -209,6 +217,23 @@ class ReglaSLA(models.Model):
     tiempo_sla = models.DurationField(
         help_text="Tiempo máximo de resolución en formato DD HH:MM:SS"
     )
+
+    @property
+    def tiempo_sla_segundos(self):
+        """Devuelve el tiempo total de SLA en segundos."""
+        if not self.tiempo_sla:
+            return 0
+        return int(self.tiempo_sla.total_seconds())
+
+    @property
+    def tiempo_sla_horas(self):
+        """Devuelve el tiempo de SLA formateado como HH:MM:SS."""
+        if not self.tiempo_sla:
+            return "00:00:00"
+        total_seconds = int(self.tiempo_sla.total_seconds())
+        hours, remainder = divmod(total_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        return f"{hours:02}:{minutes:02}:{seconds:02}"
 
     def __str__(self):
         return f"SLA para {self.severidad} en App {self.criticidad_aplicacion}: {self.tiempo_sla}"

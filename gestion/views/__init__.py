@@ -9,3 +9,5 @@ from .cod_cierre import (
     codigos_cierre_view, registrar_cod_cierre_view, eliminar_cod_cierre_view, editar_cod_cierre_view, carga_masiva_cod_cierre_view, obtener_ultimos_codigos_cierre, )
 from .logs import view_logs, download_log_file
 from .calculo_sla import calcular_sla_view, exportar_sla_csv_view
+# Importa todas las vistas de los mantenedores para que estén disponibles en el paquete 'views'
+from .mantenedores_views import *

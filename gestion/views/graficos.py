@@ -7,7 +7,10 @@ from django.db.models import Count
 from django.db.models.functions import TruncMonth
 from django.contrib.auth.decorators import login_required
 from .utils import no_cache
-from ..models import Incidencia, Aplicacion, Bloque, Estado, Severidad, CodigoCierre, Usuario
+from ..models import Incidencia, Aplicacion, Bloque, Estado, Severidad, CodigoCierre, Usuario, GrupoResolutor
+
+# Constante para el nombre del grupo especial
+GRUPO_ESPECIAL_INDRA_D = 'INDRA_D'
 
 
 def get_filtered_incidencias(request):
@@ -141,6 +144,26 @@ def graficos_data_json(request):
         .order_by('-total')[:15]
     )
 
+    # Gráfico 5: Incidencias por INDRA_D vs Otros
+    count_indra_d = 0
+    try:
+        # Buscamos el grupo resolutor. Usamos 'iexact' para una coincidencia exacta sin importar mayúsculas/minúsculas.
+        indra_d_grupo = GrupoResolutor.objects.get(
+            desc_grupo_resol__iexact=GRUPO_ESPECIAL_INDRA_D)
+        count_indra_d = incidencias_filtradas.filter(
+            grupo_resolutor=indra_d_grupo).count()
+    except GrupoResolutor.DoesNotExist:
+        # Si el grupo 'INDRA_D' no existe, su contador es 0. No es un error.
+        pass
+
+    # El total de otros es el total filtrado menos los de INDRA_D
+    count_otros = incidencias_filtradas.count() - count_indra_d
+
+    data_por_indra_d = {
+        'labels': [GRUPO_ESPECIAL_INDRA_D, 'Otros Grupos'],
+        'values': [count_indra_d, count_otros]
+    }
+
     # Diccionario para asegurar nombres de meses en español
     meses_es = {
         1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril', 5: 'Mayo', 6: 'Junio',
@@ -159,7 +182,8 @@ def graficos_data_json(request):
         'por_codigo_cierre': {
             'labels': [item.get('codigo_cierre__cod_cierre') or "No Asignado" for item in data_codigos_cierre],
             'values': [item['total'] for item in data_codigos_cierre]
-        }
+        },
+        'por_indra_d': data_por_indra_d
     }
 
     return JsonResponse(chart_data)
