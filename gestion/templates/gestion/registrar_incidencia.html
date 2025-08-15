@@ -16,7 +16,11 @@
 {% endblock extra_nav_buttons %}
 
 {% block content %}
-<div class="main-content">
+<div class="main-content page-container-incidencia"
+     data-aplicacion-id="{{ incidencia.aplicacion.id|default:'' }}"
+     data-codigo-cierre-id="{{ incidencia.codigo_cierre.id|default:'' }}"
+     data-codigos-cierre-url="{% url 'gestion:get_codigos_cierre_por_aplicacion' 0 %}"
+>
     <div class="page-header">
         <h1 class="page-title">
             {% if incidencia %}
@@ -211,90 +215,5 @@
 
 
 {% block extra_scripts %}
-<script>
-const ID_INCIDENCIA_ACTUAL = "{{ incidencia.id }}";
-const ID_APLICACION_SELECCIONADA = "{{ incidencia.aplicacion.id }}";
-const ID_CODIGO_CIERRE_SELECCIONADO = "{{ incidencia.codigo_cierre.id }}";
-
-document.addEventListener('DOMContentLoaded', function() {
-    // MENSAJE 1: Nos confirma que el script se inició después de cargar la página.
-    console.log("Script iniciado. DOM cargado.");
-
-    const aplicacionSelect = document.getElementById('aplicacion');
-    const codigoCierreSelect = document.getElementById('codigo_cierre');
-
-    // MENSAJE 2: Verificamos si encontramos el campo de aplicación.
-    if (aplicacionSelect) {
-        console.log("Elemento 'aplicacion' encontrado.", aplicacionSelect);
-    } else {
-        console.error("¡ERROR! No se encontró el elemento con ID 'aplicacion'.");
-        return; // Detenemos el script si no lo encontramos.
-    }
-
-    // MENSAJE 3: Verificamos si encontramos el campo de código de cierre.
-    if (codigoCierreSelect) {
-        console.log("Elemento 'codigo_cierre' encontrado.", codigoCierreSelect);
-    } else {
-        console.error("¡ERROR! No se encontró el elemento con ID 'codigo_cierre'.");
-        return;
-    }
-
-    // MENSAJE 4: Añadimos el "oyente" del evento.
-    console.log("Añadiendo el 'listener' al campo de aplicación.");
-    aplicacionSelect.addEventListener('change', function() { // Se ejecuta cuando el usuario cambia la selección
-        // MENSAJE 5: Este mensaje SOLO debe aparecer CUANDO seleccionas una aplicación.
-        console.log("¡Evento 'change' detectado en Aplicación!");
-        
-        const aplicacionId = this.value; // El ID de la aplicación recién seleccionada
-        console.log("ID de aplicación seleccionado:", aplicacionId);
-
-        codigoCierreSelect.innerHTML = '<option value="">Cargando...</option>';
-
-        if (!aplicacionId) {
-            codigoCierreSelect.innerHTML = '<option value="">Seleccione una aplicación primero...</option>';
-            return;
-        }
-
-        const url = `{% url 'gestion:get_codigos_cierre_por_aplicacion' 0 %}`.replace('0', aplicacionId);
-        console.log("Llamando a la URL:", url);
-
-        fetch(url)
-            .then(response => {
-                console.log("Respuesta recibida del servidor:", response);
-                if (!response.ok) {
-                    throw new Error(`Error de red: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log("Datos (JSON) recibidos:", data);
-                codigoCierreSelect.innerHTML = '<option value="">Seleccione un código...</option>';
-                
-                data.forEach(function(codigo) {
-                    const option = document.createElement('option');
-                    option.value = codigo.id;
-                    option.textContent = `${codigo.codigo} - ${codigo.descripcion}`;
-                    
-                    // Si estamos editando y este código es el que ya estaba guardado, lo pre-seleccionamos
-                    if (ID_CODIGO_CIERRE_SELECCIONADO && codigo.id == ID_CODIGO_CIERRE_SELECCIONADO) {
-                        option.selected = true;
-                    }
-
-                    codigoCierreSelect.appendChild(option);
-                });
-            })
-            .catch(error => {
-                console.error('Error durante la operación fetch:', error);
-                codigoCierreSelect.innerHTML = '<option value="">Error al cargar datos</option>';
-            });
-    });
-
-    // Si estamos en modo edición y ya hay una aplicación seleccionada, disparamos el evento 'change'
-    // para cargar los códigos de cierre correspondientes al cargar la página.
-    if (ID_APLICACION_SELECCIONADA) {
-        console.log("Disparando evento 'change' manualmente para cargar códigos de cierre iniciales.");
-        aplicacionSelect.dispatchEvent(new Event('change'));
-    }
-});
-</script>
+    <script src="{% static 'gestion/js/registrar_incidencia.js' %}"></script>
 {% endblock extra_scripts %}

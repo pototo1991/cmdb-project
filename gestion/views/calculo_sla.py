@@ -14,11 +14,26 @@ from django.views.decorators.http import require_POST
 from .utils import logger
 from ..models import Incidencia, ReglaSLA, HorarioLaboral, DiaFeriado, Usuario
 
-# --- El resto del archivo permanece sin cambios hasta la vista de exportación ---
-# (Se omiten las funciones de normalizar, parsear, etc. para brevedad)
+# --- Funciones de Utilidad ---
 
 
 def normalizar_texto(texto):
+    """
+    Limpia y estandariza una cadena de texto.
+
+    Realiza las siguientes operaciones:
+    1. Convierte a minúsculas.
+    2. Elimina acentos y diacríticos (ej. 'camión' -> 'camion').
+    3. Reemplaza múltiples espacios en blanco por uno solo.
+    4. Elimina espacios al inicio y al final.
+    5. Devuelve una cadena vacía si la entrada no es un string.
+
+    Args:
+        texto (str): La cadena de texto a normalizar.
+
+    Returns:
+        str: El texto normalizado.
+    """
     if not isinstance(texto, str):
         return ""
     texto = re.sub(r'\s+', ' ', texto).strip().lower()
@@ -26,12 +41,32 @@ def normalizar_texto(texto):
 
 
 def parsear_bitacora(bitacora_texto, incidencia_id="N/A"):
+    """
+    Convierte el texto plano de una bitácora en una lista estructurada de entradas.
+
+    Utiliza una expresión regular para encontrar todas las entradas que sigan el
+    patrón "dd-mm-yyyy hh:mm:ss, usuario, mensaje".
+
+    Args:
+        bitacora_texto (str): El contenido completo de la bitácora.
+        incidencia_id (str, opcional): El ID de la incidencia, para logging de errores.
+
+    Returns:
+        list: Una lista de diccionarios, cada uno representando una entrada de la
+              bitácora, ordenada por fecha. Ejemplo de una entrada:
+              {'fecha_hora': datetime_obj, 'usuario': 'nombre.usuario', 'mensaje': 'texto...'}
+    """
     if not bitacora_texto:
         return []
+
+    logger.info(
+        f"Iniciando parseo de bitácora para Incidencia ID {incidencia_id}.")
     bitacora_texto_limpia = bitacora_texto.replace('¶', '\n')
     entries = []
+    # Expresión regular para capturar fecha, usuario y mensaje.
     regex = re.compile(
         r'(\d{2}[-/]\d{2}[-/]\d{4} \d{1,2}:\d{2}:\d{2})\s*,\s*([^,]+?)\s*,\s*(.*?)(?=\s*[\r\n]+\s*\d{2}[-/]\d{2}[-/]\d{4}|\Z)', re.DOTALL)
+
     matches = regex.finditer(bitacora_texto_limpia)
     for match in matches:
         date_str, user_raw, message = match.groups()
@@ -44,59 +79,81 @@ def parsear_bitacora(bitacora_texto, incidencia_id="N/A"):
         except ValueError:
             logger.warning(
                 f"Error parseando fecha en bitácora para Incidencia ID {incidencia_id}: '{date_str}'. Ignorando entrada.")
+
     entries.sort(key=lambda x: x["fecha_hora"])
+    logger.info(
+        f"Parseo de bitácora para Incidencia ID {incidencia_id} finalizado. Se encontraron {len(entries)} entradas válidas.")
     return entries
 
 
 def is_working_time(dt_obj, horario_laboral, dias_feriados):
     """
-    Verifica si una fecha y hora específicas caen dentro del horario laboral,
-    excluyendo días feriados.
+    Verifica si una fecha/hora específica cae dentro del horario laboral.
+
+    Args:
+        dt_obj (datetime): El objeto de fecha y hora a verificar.
+        horario_laboral (dict): Diccionario con el horario laboral por día de la semana.
+        dias_feriados (set): Un conjunto de fechas de días feriados.
+
+    Returns:
+        bool: True si la fecha/hora está dentro del horario laboral, False en caso contrario.
     """
+    # Un punto en el tiempo no es laboral si es un día feriado.
     if dt_obj.date() in dias_feriados:
         return False
 
-    dia_semana = dt_obj.weekday()
+    dia_semana = dt_obj.weekday()  # Lunes es 0, Domingo es 6
     horario_dia = horario_laboral.get(dia_semana)
 
-    # CORRECCIÓN: Se verifica no solo si el horario existe, sino también si contiene horas válidas (no None).
-    # Si 'horario_dia' es (None, None), 'horario_dia[0]' será None y la condición será verdadera, retornando False.
+    # No es laboral si no hay horario definido para ese día o si está marcado como cerrado (None).
     if not horario_dia or not horario_dia[0]:
         return False
 
+    # Es laboral si la hora actual está entre la hora de inicio y fin para ese día.
     hora_inicio, hora_fin = horario_dia
     return hora_inicio <= dt_obj.time() <= hora_fin
 
 
 def calcular_tiempo_efectivo(start_dt, end_dt, horario_laboral, dias_feriados, es_critica_24_7=False):
     """
-    Calcula el tiempo transcurrido entre dos fechas, contando solo el tiempo
-    dentro del horario laboral (a menos que sea 24/7), con precisión de segundos.
+    Calcula el tiempo laboral efectivo transcurrido entre dos fechas.
+
+    Si la incidencia es crítica (24/7), calcula la diferencia total de tiempo.
+    De lo contrario, itera segundo a segundo, contando solo aquellos que caen
+    dentro del horario laboral definido.
+
+    Args:
+        start_dt (datetime): Fecha y hora de inicio del intervalo.
+        end_dt (datetime): Fecha y hora de fin del intervalo.
+        horario_laboral (dict): Diccionario de horarios laborales.
+        dias_feriados (set): Conjunto de fechas de días feriados.
+        es_critica_24_7 (bool): Si es True, ignora horarios y feriados.
+
+    Returns:
+        timedelta: El tiempo laboral efectivo transcurrido.
     """
     if start_dt >= end_dt:
         return timedelta(0)
 
-    # Si la incidencia es crítica, el cálculo es directo y ya tiene precisión de segundos.
+    # Modo 24/7: el cálculo es directo y rápido.
     if es_critica_24_7:
+        logger.debug(f"Cálculo 24/7 para intervalo de {start_dt} a {end_dt}.")
         return end_dt - start_dt
 
+    # Modo Horario Laboral: cálculo segundo a segundo.
     tiempo_laboral_total = timedelta(0)
     puntero_tiempo = start_dt
 
-    # Itera segundo a segundo entre el inicio y el fin del segmento.
     while puntero_tiempo < end_dt:
-        # Verifica si el segundo actual está dentro del horario laboral.
         if is_working_time(puntero_tiempo, horario_laboral, dias_feriados):
             tiempo_laboral_total += timedelta(seconds=1)
-
-        # Avanza al siguiente segundo.
         puntero_tiempo += timedelta(seconds=1)
 
     return tiempo_laboral_total
-# >>> FIN DE LA FUNCIÓN MODIFICADA <<<
 
 
 def _timedelta_to_hms(td):
+    """Convierte un objeto timedelta a un string con formato HH:MM:SS."""
     if not td:
         return "00:00:00"
     total_seconds = int(td.total_seconds())
@@ -105,84 +162,100 @@ def _timedelta_to_hms(td):
     return f"{h:02d}:{m:02d}:{s:02d}"
 
 
-def calcular_sla_desde_bitacora(incidencia, gestores_norm, horarios, feriados, reglas_sla):
-    # VALIDACIÓN DE PRIORIDAD 1: Excluir incidencias que no aplican para SLA.
-    # Esta validación se mueve al principio para que tenga la máxima prioridad.
-    # Bloque ID 5 = 'Sin bloque'
-    # Grupo Resolutor ID 15 = 'INDRA_D'
-    if incidencia.bloque_id == 5 or incidencia.grupo_resolutor_id == 15:
-        motivos = []
-        if incidencia.bloque_id == 5:
-            motivos.append("el bloque es 'Sin Bloque' (ID 5)")
-        if incidencia.grupo_resolutor_id == 15:
-            motivos.append("el grupo resolutor es 'INDRA_D' (ID 15)")
+# --- Lógica Principal y Vistas ---
 
-        razon_log = " y ".join(motivos)
+def calcular_sla_desde_bitacora(incidencia, gestores_norm, horarios, feriados, reglas_sla):
+    """
+    Orquesta el cálculo completo del SLA para una única incidencia, generando un log detallado.
+
+    Esta es la función central que aplica toda la lógica de negocio:
+    1. Valida si la incidencia aplica para SLA o debe ser omitida.
+    2. Parsea la bitácora para obtener los segmentos de tiempo.
+    3. Itera sobre los segmentos y decide si el tiempo debe contarse.
+    4. Suma el tiempo efectivo de los segmentos válidos.
+    5. Compara el tiempo total con la regla de SLA correspondiente.
+    6. Devuelve un diccionario con todos los resultados del cálculo.
+
+    Args:
+        incidencia (Incidencia): La instancia de la incidencia.
+        gestores_norm (set): Conjunto de nombres de usuario de gestores normalizados.
+        horarios (dict): Diccionario de horarios laborales.
+        feriados (set): Conjunto de fechas de días feriados.
+        reglas_sla (dict): Diccionario con las reglas de SLA.
+
+    Returns:
+        dict: Un diccionario con los resultados detallados del cálculo.
+    """
+    # 1. Validaciones previas para omitir cálculo si no aplica.
+    if incidencia.bloque_id == 5 or incidencia.grupo_resolutor_id == 15:
+        motivos = ("el bloque es 'Sin Bloque'" if incidencia.bloque_id == 5 else "",
+                   "el grupo resolutor es 'INDRA_D'" if incidencia.grupo_resolutor_id == 15 else "")
+        razon_log = " y ".join(filter(None, motivos))
         logger.info(
-            f"Cálculo de SLA para Incidencia ID {incidencia.id} ('{incidencia.incidencia}') omitido porque {razon_log}."
-        )
+            f"Cálculo omitido para Incidencia ID {incidencia.id} porque {razon_log}.")
         return {"cumple_sla": "No Aplica"}
 
-    # El resto de esta función y las vistas no necesitan cambios, ya que
-    # la modificación está contenida dentro de 'calcular_tiempo_efectivo'.
-    campos_faltantes = []
-    if not incidencia.severidad:
-        campos_faltantes.append("Severidad")
-    if not incidencia.aplicacion:
-        campos_faltantes.append("Aplicación")
-    elif not incidencia.aplicacion.criticidad:
-        campos_faltantes.append("Criticidad de la Aplicación")
-
+    campos_faltantes = [campo for campo, valor in [("Severidad", incidencia.severidad), ("Aplicación", incidencia.aplicacion), (
+        "Criticidad de la Aplicación", incidencia.aplicacion.criticidad if incidencia.aplicacion else None)] if not valor]
     if campos_faltantes:
-        mensaje_error = ", ".join(campos_faltantes)
         logger.warning(
-            f"Cálculo de SLA para Incidencia ID {incidencia.id} ('{incidencia.incidencia}') omitido. Faltan datos: {mensaje_error}.")
+            f"Cálculo omitido para Incidencia ID {incidencia.id}. Faltan datos: {', '.join(campos_faltantes)}.")
         return {"cumple_sla": "No Calculado (Faltan Datos)"}
 
+    # 2. Inicio del análisis y procesamiento de bitácora
     logger.info(
         f"\n--- Analizando Segmentos para Incidencia: {incidencia.incidencia} ---")
     bitacora_entries = parsear_bitacora(incidencia.bitacora, incidencia.id)
-    severidad_norm = normalizar_texto(incidencia.severidad.desc_severidad)
-    es_critica_24_7 = (severidad_norm == "critica")
+    es_critica_24_7 = (normalizar_texto(
+        incidencia.severidad.desc_severidad) == "critica")
     tiempo_gestion_total = timedelta(0)
 
+    # 3. Bucle de análisis de segmentos con logging detallado
     if len(bitacora_entries) > 1:
         for i in range(len(bitacora_entries) - 1):
-            entrada_actual, entrada_siguiente = bitacora_entries[i], bitacora_entries[i+1]
-            start_user, end_user = entrada_actual['usuario'], entrada_siguiente['usuario']
-            segment_start_str, segment_end_str = entrada_actual['fecha_hora'].strftime(
-                '%d-%m-%Y %H:%M:%S'), entrada_siguiente['fecha_hora'].strftime('%d-%m-%Y %H:%M:%S')
+            entrada_actual = bitacora_entries[i]
+            entrada_siguiente = bitacora_entries[i+1]
 
-            logger.info(f"Desde {segment_start_str} hasta {segment_end_str}.")
+            start_dt, end_dt = entrada_actual["fecha_hora"], entrada_siguiente["fecha_hora"]
+            start_user, end_user = entrada_actual['usuario'], entrada_siguiente['usuario']
+
+            # Logs de información del segmento
+            logger.info(
+                f"Desde {start_dt.strftime('%d-%m-%Y %H:%M:%S')} hasta {end_dt.strftime('%d-%m-%Y %H:%M:%S')}.")
             logger.info(f"-> De: '{start_user}' | A: '{end_user}'")
 
+            # Lógica de decisión
             es_respuesta_de_gestor = end_user in gestores_norm
             reloj_no_pausado = 'pendiente' not in normalizar_texto(
                 entrada_actual['mensaje'])
 
+            # Log de análisis basado en la decisión
             if es_respuesta_de_gestor and reloj_no_pausado:
                 tiempo_segmento = calcular_tiempo_efectivo(
-                    entrada_actual["fecha_hora"], entrada_siguiente["fecha_hora"], horarios, feriados, es_critica_24_7)
+                    start_dt, end_dt, horarios, feriados, es_critica_24_7)
                 tiempo_gestion_total += tiempo_segmento
                 logger.info(
-                    f"✅ ANÁLISIS: Se cuenta el tiempo. Gestor '{end_user}' respondió. Tiempo sumado: {_timedelta_to_hms(tiempo_segmento)}")
-            else:
-                if not es_respuesta_de_gestor:
-                    logger.info(
-                        f"❌ ANÁLISIS: No se cuenta. El usuario '{end_user}' no es un gestor.")
-                elif not reloj_no_pausado:
-                    logger.info(
-                        f"⏸️ ANÁLISIS: No se cuenta. El reloj está pausado por nota 'Pendiente' de '{start_user}'.")
+                    f" ANÁLISIS: Se cuenta el tiempo. Gestor '{end_user}' respondió. Tiempo sumado: {_timedelta_to_hms(tiempo_segmento)}")
+            elif not es_respuesta_de_gestor:
+                logger.info(
+                    f" ANÁLISIS: No se cuenta. El usuario '{end_user}' no es un gestor.")
+            else:  # not reloj_no_pausado
+                logger.info(
+                    f" ANÁLISIS: No se cuenta. El reloj está pausado por nota 'Pendiente' de '{start_user}'.")
+
             logger.info("-" * 60)
 
+    # Fallback si el tiempo de gestión es 0 en incidencias no críticas.
     if tiempo_gestion_total == timedelta(0) and not es_critica_24_7 and bitacora_entries:
         tiempo_gestion_total = timedelta(minutes=20)
         logger.info(
             "-> Aplicando fallback de 20 minutos por tiempo de gestión 0.")
 
+    # 4. Log del resultado final
     logger.info(
         f"-> TIEMPO TOTAL DE GESTIÓN PARA {incidencia.incidencia}: {_timedelta_to_hms(tiempo_gestion_total)}\n")
 
+    # 5. Comparación con SLA y devolución de resultados
     clave_regla = (incidencia.severidad.id,
                    incidencia.aplicacion.criticidad.id)
     tiempo_sla_objetivo = reglas_sla.get(clave_regla)
@@ -192,30 +265,55 @@ def calcular_sla_desde_bitacora(incidencia, gestores_norm, horarios, feriados, r
     elif not bitacora_entries:
         cumple_sla = "No Calculado (Bitácora Vacía)"
 
-    ultimo_gestor = "N/A"
-    for entry in reversed(bitacora_entries):
-        if entry["usuario"] in gestores_norm:
-            ultimo_gestor = entry["usuario"]
-            break
+    ultimo_gestor = next((entry["usuario"] for entry in reversed(
+        bitacora_entries) if entry["usuario"] in gestores_norm), "N/A")
 
-    return {"incidencia": incidencia, "tiempo_gestion_calculado": tiempo_gestion_total, "tiempo_gestion_horas": _timedelta_to_hms(tiempo_gestion_total), "sla_objetivo": tiempo_sla_objetivo, "sla_objetivo_horas": _timedelta_to_hms(tiempo_sla_objetivo), "cumple_sla": cumple_sla, "ultimo_gestor": ultimo_gestor}
+    return {
+        "incidencia": incidencia,
+        "tiempo_gestion_calculado": tiempo_gestion_total,
+        "tiempo_gestion_horas": _timedelta_to_hms(tiempo_gestion_total),
+        "sla_objetivo": tiempo_sla_objetivo,
+        "sla_objetivo_horas": _timedelta_to_hms(tiempo_sla_objetivo),
+        "cumple_sla": cumple_sla,
+        "ultimo_gestor": ultimo_gestor
+    }
 
 
 @require_POST
 def calcular_sla_view(request):
+    """
+    Endpoint de API para calcular y guardar el SLA de múltiples incidencias.
+
+    Recibe una petición POST con un cuerpo JSON que contiene una lista de IDs de
+    incidencias. Procesa cada una, actualiza su estado de SLA en la base de
+    datos y devuelve un resumen de los resultados.
+
+    Args:
+        request (HttpRequest): La solicitud HTTP (debe ser POST).
+
+    Returns:
+        JsonResponse: Un objeto JSON con el estado de la operación y los resultados.
+    """
+    logger.info(
+        f"Recibida petición para calcular SLA por el usuario '{request.user}'.")
     try:
         data = json.loads(request.body)
         incidencia_ids = data.get('incidencia_ids', [])
         if not incidencia_ids:
+            logger.warning(
+                "La petición de cálculo de SLA no contenía IDs de incidencias.")
             return JsonResponse({'status': 'error', 'message': 'No se seleccionaron incidencias.'}, status=400)
 
+        logger.info(f"Se procesarán {len(incidencia_ids)} incidencias.")
+
+        # --- Precarga de datos para eficiencia ---
         incidencias_a_procesar = Incidencia.objects.filter(
             id__in=incidencia_ids).select_related('aplicacion__criticidad', 'severidad')
-        gestores_norm = set(normalizar_texto(u.usuario)
-                            for u in Usuario.objects.all())
+        gestores_norm = {normalizar_texto(u.usuario)
+                         for u in Usuario.objects.all()}
         horarios = {h.dia_semana: (h.hora_inicio, h.hora_fin)
                     for h in HorarioLaboral.objects.all()}
-        feriados = set(d.fecha for d in DiaFeriado.objects.all())
+        feriados = {d.fecha for d in DiaFeriado.objects.all()}
         reglas_sla = {(r.severidad_id, r.criticidad_aplicacion_id)                      : r.tiempo_sla for r in ReglaSLA.objects.all()}
 
         stats = Counter()
@@ -225,6 +323,7 @@ def calcular_sla_view(request):
                 inc, gestores_norm, horarios, feriados, reglas_sla)
             stats[resultado.get("cumple_sla", "Error")] += 1
 
+            # Actualización en la base de datos
             inc.tiempo_sla_calculado = resultado.get(
                 "tiempo_gestion_calculado")
             inc.cumple_sla = resultado.get("cumple_sla", "Error")
@@ -232,6 +331,7 @@ def calcular_sla_view(request):
             resultados_vista.append({'id': inc.id, 'incidencia': inc.incidencia,
                                     'cumple_sla': inc.cumple_sla, 'tiempo_sla': resultado.get("tiempo_gestion_horas")})
 
+        # --- Log del resumen final ---
         logger.info(
             "\n--- RESUMEN DE ESTADÍSTICAS DE SLA (Cálculo desde Tabla) ---")
         for estado, count in stats.items():
@@ -249,63 +349,69 @@ def calcular_sla_view(request):
 
 
 def exportar_sla_csv_view(request):
-    gestores_norm = set(normalizar_texto(u.usuario)
-                        for u in Usuario.objects.all())
+    """
+    Genera y exporta un reporte de SLA en formato CSV.
+
+    Esta vista calcula el SLA para un conjunto de incidencias (respetando los
+    filtros de la URL) y devuelve el resultado como un archivo CSV descargable.
+
+    Args:
+        request (HttpRequest): La solicitud HTTP (puede tener parámetros GET para filtrar).
+
+    Returns:
+        HttpResponse: Un archivo CSV para ser descargado por el navegador.
+    """
+    # 1. Obtención de Filtros y Log de Inicio
+    filtros_aplicados = [f"{k}='{v}'" for k, v in request.GET.items() if v]
+    log_filtros = f"con filtros: {', '.join(filtros_aplicados)}" if filtros_aplicados else "sin filtros"
+    logger.info(
+        f"Usuario '{request.user}' ha solicitado exportación CSV de SLA {log_filtros}.")
+
+    # 2. Precarga de Datos y Aplicación de Filtros
+    gestores_norm = {normalizar_texto(u.usuario)
+                     for u in Usuario.objects.all()}
     horarios = {h.dia_semana: (h.hora_inicio, h.hora_fin)
                 for h in HorarioLaboral.objects.all()}
-    feriados = set(d.fecha for d in DiaFeriado.objects.all())
+    feriados = {d.fecha for d in DiaFeriado.objects.all()}
     reglas_sla = {(r.severidad_id, r.criticidad_aplicacion_id)                  : r.tiempo_sla for r in ReglaSLA.objects.all()}
 
     incidencias_qs = Incidencia.objects.select_related(
         'aplicacion__criticidad', 'severidad', 'usuario_asignado').all()
 
-    # >>> INICIO DE LA CORRECCIÓN <<<
-    # Se añade la lógica para procesar todos los filtros que vienen de la URL
-
-    filtro_incidencia = request.GET.get('incidencia')
-    filtro_fecha_desde = request.GET.get('fecha_desde')
-    filtro_fecha_hasta = request.GET.get('fecha_hasta')
-
-    if filtro_incidencia:
+    # Aplicar filtros de la URL
+    if filtro_incidencia := request.GET.get('incidencia'):
         incidencias_qs = incidencias_qs.filter(
             incidencia__icontains=filtro_incidencia)
-
-    if filtro_fecha_desde:
+    if filtro_fecha_desde := request.GET.get('fecha_desde'):
         try:
-            fecha_obj = datetime.strptime(filtro_fecha_desde, '%Y-%m-%d')
-            # Hacemos la fecha consciente de la zona horaria
             fecha_aware = timezone.make_aware(
-                fecha_obj, timezone.get_default_timezone())
-            # Filtramos por fecha_ultima_resolucion mayor o igual que la fecha de inicio
+                datetime.strptime(filtro_fecha_desde, '%Y-%m-%d'))
             incidencias_qs = incidencias_qs.filter(
                 fecha_ultima_resolucion__gte=fecha_aware)
         except (ValueError, TypeError):
-            pass  # Ignora el filtro si la fecha es inválida
-
-    if filtro_fecha_hasta:
+            pass
+    if filtro_fecha_hasta := request.GET.get('fecha_hasta'):
         try:
-            fecha_obj = datetime.strptime(filtro_fecha_hasta, '%Y-%m-%d')
-            # Añadimos un día para incluir todo el día de la fecha "hasta"
-            fecha_obj_fin_dia = fecha_obj + timedelta(days=1)
-            fecha_aware = timezone.make_aware(
-                fecha_obj_fin_dia, timezone.get_default_timezone())
-            # Filtramos por fecha_ultima_resolucion menor que el día siguiente
+            fecha_aware = timezone.make_aware(datetime.strptime(
+                filtro_fecha_hasta, '%Y-%m-%d') + timedelta(days=1))
             incidencias_qs = incidencias_qs.filter(
                 fecha_ultima_resolucion__lt=fecha_aware)
         except (ValueError, TypeError):
-            pass  # Ignora el filtro si la fecha es inválida
+            pass
 
-    # >>> FIN DE LA CORRECCIÓN <<<
-
+    # 3. Generación del CSV
     response = HttpResponse(content_type='text/csv', headers={
                             'Content-Disposition': 'attachment; filename="reporte_sla_bitacora.csv"'})
+    # BOM para compatibilidad con Excel
     response.write(u'\ufeff'.encode('utf8'))
     writer = csv.writer(response)
     writer.writerow(['Incidencia', 'Fecha Resolucion', 'Ultimo Gestor', 'Aplicativo', 'Criticidad Aplicativo',
                     'Severidad', 'SLA Objetivo (Horas)', 'Tiempo Gestion (Horas)', 'Cumple SLA'])
 
     stats = Counter()
+    total_procesadas = 0
     for inc in incidencias_qs:
+        total_procesadas += 1
         resultado = calcular_sla_desde_bitacora(
             inc, gestores_norm, horarios, feriados, reglas_sla)
         stats[resultado.get("cumple_sla", "Error")] += 1
@@ -324,15 +430,14 @@ def exportar_sla_csv_view(request):
                 resultado.get("cumple_sla", "Error")
             ])
 
+    # 4. Log del Resumen Final
     logger.info("\n--- RESUMEN DE ESTADÍSTICAS DE SLA (Exportación CSV) ---")
     for estado, count in stats.items():
         logger.info(f"{estado:<40} : {count}")
     logger.info(
-        # Usamos list() para obtener el conteo después de filtrar
-        f"{'Total de incidencias procesadas':<40} : {len(list(incidencias_qs))}")
+        f"{'Total de incidencias procesadas':<40} : {total_procesadas}")
     logger.info("------------------------------------------------------\n")
+    logger.info(f"Exportación CSV para '{request.user}' completada.")
 
-    # Se establece una cookie que el JavaScript usará para saber que la descarga ha finalizado.
     response.set_cookie('descargaFinalizada', 'true', max_age=20, path='/')
-
     return response

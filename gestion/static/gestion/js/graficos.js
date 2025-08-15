@@ -220,7 +220,7 @@ const dashboardModule = {
                     this.renderChart('chartPorAplicativo', 'aplicativo', data.por_aplicativo, 'Incidencias por Aplicativo (Top 15)', 'Nº de Incidencias', this.colors.porAplicativo, 'bar');
                 }
                 if (data && data.por_mes) {
-                    this.renderChart('chartPorMes', 'porMes', data.por_mes, 'Incidencias por Mes', 'Nº de Incidencias', this.colors.porMes, 'polarArea');
+                    this.renderChart('chartPorMes', 'porMes', data.por_mes, 'Incidencias por Mes', 'Nº de Incidencias', this.colors.porMes, 'bar');
                 }
                 if (data && data.por_severidad) {
                     this.renderChart('chartPorSeveridad', 'severidad', data.por_severidad, 'Incidencias por Severidad', 'Nº de Incidencias', this.colors.porSeveridad, 'pie');

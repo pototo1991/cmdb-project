@@ -48,6 +48,8 @@ urlpatterns = [
          views.eliminar_incidencia_view, name='eliminar_incidencia'),
     path('incidencias/carga-masiva/', views.carga_masiva_incidencia_view,
          name='carga_masiva_incidencia'),
+    path('incidencias/carga-masiva-inicial/',
+         views.carga_masiva_inicial_view, name='carga_masiva_inicial'),
 
     path('incidencias/calcular-sla/',
          views.calculo_sla.calcular_sla_view, name='calcular_sla'),

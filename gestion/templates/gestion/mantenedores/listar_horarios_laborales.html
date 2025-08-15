@@ -5,9 +5,11 @@
 
 {% block add_button %}
     {# Solo mostramos el botón si hay días de la semana sin horario asignado. #}
-    {% if se_pueden_agregar_mas %}
-        <a href="{% url 'gestion:registrar_horario_laboral' %}" class="btn btn-primary">Agregar Horario</a>
-    {% endif %}
+    <a href="{% if se_pueden_agregar_mas %}{% url 'gestion:registrar_horario_laboral' %}{% else %}#{% endif %}"
+       class="btn btn-primary {% if not se_pueden_agregar_mas %}disabled{% endif %}"
+       {% if not se_pueden_agregar_mas %}title="Ya se han definido horarios para todos los días de la semana." aria-disabled="true"{% endif %}>
+        Agregar Horario
+    </a>
 {% endblock %}
 
 {% block table_content %}

@@ -1,0 +1,62 @@
+{% extends 'gestion/base.html' %}
+{% load static %}
+
+{% block title %}Carga Masiva Inicial de Incidencias - CMDB{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'gestion/css/carga_masiva.css' %}">
+{% endblock %}
+
+{% block extra_nav_buttons %}
+    {% include 'gestion/_extra_nav_buttons.html' %}
+{% endblock extra_nav_buttons %}
+
+{% block content %}
+<div class="main-content">
+    <div class="page-header">
+        <h1 class="page-title">Carga Masiva Inicial de Incidencias</h1>
+    </div>
+
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="message {{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="table-container">
+        <p>Seleccione un archivo de texto (<strong>.txt</strong>) con el formato correcto para realizar la carga masiva inicial de incidencias en el sistema.</p>
+        <p>El archivo debe estar delimitado por pipes (<strong>|</strong>) y contener las columnas esperadas por el sistema.</p>
+
+        <form method="post" enctype="multipart/form-data" action="{% url 'gestion:carga_masiva_inicial' %}" class="upload-form">
+            {% csrf_token %}
+            <div class="form-group-file">
+                <input type="file" name="incidencias_file" id="incidencias_file" class="file-input" required>
+                <label for="incidencias_file" class="file-label">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <span>Seleccionar archivo...</span>
+                </label>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn-submit link-con-spinner">
+                    <i class="fas fa-upload"></i> Cargar Incidencias
+                </button>
+            </div>
+        </form>
+
+        {% if errors %}
+        <div class="errors-container">
+            <h3>Se encontraron los siguientes errores:</h3>
+            <ul>
+                {% for error in errors %}
+                <li>Línea {{ error.line }}: {{ error.message }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

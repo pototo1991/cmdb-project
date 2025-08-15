@@ -167,7 +167,7 @@ LOGGING = {
             'class': 'concurrent_log_handler.ConcurrentRotatingFileHandler',
             'filename': BASE_DIR / 'logs.log',
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 5,
+            'backupCount': 2,
             'formatter': 'verbose',
         },
         'console': {

@@ -91,79 +91,8 @@
 
     </div>
 
-{# --- INICIO DEL SCRIPT JAVASCRIPT --- #}
-{# Este script también se añade solo si estamos creando un código nuevo #}
-{% if not codigo_cierre %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const aplicacionSelect = document.getElementById('aplicacion');
-    const container = document.getElementById('ultimos-codigos-container');
-    const lista = document.getElementById('lista-ultimos-codigos');
-    
-    const urlTemplate = aplicacionSelect.dataset.url;
-
-    aplicacionSelect.addEventListener('change', function() {
-        const aplicacionId = this.value;
-
-        if (!aplicacionId || !urlTemplate) {
-            container.style.display = 'none';
-            return;
-        }
-
-        const url = urlTemplate.replace('0', aplicacionId);
-
-        fetch(url)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('La respuesta de la red no fue exitosa.');
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Se limpia la lista antes de añadir nuevos resultados.
-                lista.innerHTML = ''; 
-
-                if (data.codigos && data.codigos.length > 0) {
-                    data.codigos.forEach(codigo => {
-                        const li = document.createElement('li');
-
-                        const codigoSpan = document.createElement('span');
-                        codigoSpan.className = 'codigo-item-code';
-                        codigoSpan.textContent = codigo.cod_cierre;
-
-                        const descSpan = document.createElement('span');
-                        descSpan.className = 'codigo-item-desc';
-                        descSpan.textContent = codigo.desc_cod_cierre;
-
-                        li.appendChild(codigoSpan);
-                        li.appendChild(descSpan);
-
-                        lista.appendChild(li);
-                    });
-                } else {
-                    const li = document.createElement('li');
-                    // **AJUSTE 1: Se añade la clase para el estilo del mensaje.**
-                    li.className = 'mensaje-info'; 
-                    li.textContent = 'No se encontraron códigos de cierre para esta aplicación.';
-                    lista.appendChild(li);
-                }
-
-                // **AJUSTE 2: Se mueve esta línea aquí para no repetirla.**
-                // Así, el contenedor se muestra tanto si hay resultados como si no.
-                container.style.display = 'block';
-            })
-            .catch(error => {
-                console.error('Error al obtener los códigos de cierre:', error);
-                const li = document.createElement('li');
-                li.className = 'mensaje-info'; // Usamos la misma clase para errores
-                li.textContent = 'Ocurrió un error al cargar los datos.';
-                lista.appendChild(li);
-                container.style.display = 'block';
-            });
-    });
-});
-</script>
-{% endif %}
-{# --- FIN DEL SCRIPT JAVASCRIPT --- #}
-
 {% endblock content %}
+
+{% block extra_scripts %}
+    <script src="{% static 'gestion/js/registrar_incidencia.js' %}"></script>
+{% endblock extra_scripts %}

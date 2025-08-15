@@ -88,10 +88,13 @@
     <div class="action-buttons-container">
         <a href="{% url 'gestion:registrar_incidencia' %}" class="btn filter-btn link-con-spinner">Registrar Incidencia</a>
         <a href="{% url 'gestion:carga_masiva_incidencia' %}" class="btn filter-btn link-con-spinner">Carga Masiva</a>
+        <a href="{% url 'gestion:carga_masiva_inicial' %}" class="btn filter-btn link-con-spinner">
+            <i class="fas fa-database"></i> Carga Inicial
+        </a>
         <button id="btn-exportar-reporte" class="btn btn-report filter-btn link-con-spinner download-link">Generar Reporte</button>
 
         <a href="{% url 'gestion:incidencias' %}?fecha_desde={{ fecha_inicio_mes }}&fecha_hasta={{ fecha_fin_mes }}" class="btn btn-info filter-btn link-con-spinner">Ver Mes Actual</a>
-        <a href="{% url 'gestion:incidencias' %}" class="btn btn-secondary filter-btn link-con-spinner">Ver Todos</a>
+        <a href="{% url 'gestion:incidencias' %}?ver_todos=1" class="btn btn-secondary filter-btn link-con-spinner">Ver Todos</a>
         <button id="btn-asignar-sla" class="btn btn-report filter-btn">Calcular SLA</button>
     </div>
 

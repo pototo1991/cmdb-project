@@ -1,6 +1,6 @@
 from django import forms
 from datetime import timedelta
-from .models import ReglaSLA, HorarioLaboral, Usuario, Estado, GrupoResolutor, DiaFeriado
+from .models import Aplicacion, ReglaSLA, HorarioLaboral, Usuario, Estado, GrupoResolutor, DiaFeriado
 
 
 class UsuarioForm(forms.ModelForm):
@@ -50,6 +50,57 @@ class GrupoResolutorForm(forms.ModelForm):
         labels = {
             'desc_grupo_resol': 'Descripción del Grupo Resolutor',
         }
+
+
+class AplicacionForm(forms.ModelForm):
+    """
+    Formulario para crear y editar instancias del modelo Aplicacion.
+    """
+    class Meta:
+        model = Aplicacion
+        # Se incluyen todos los campos del formulario de registro/edición
+        fields = ['cod_aplicacion', 'nombre_aplicacion', 'bloque',
+                  'criticidad', 'estado', 'desc_aplicacion']
+        widgets = {
+            'cod_aplicacion': forms.TextInput(attrs={'class': 'form-control'}),
+            'nombre_aplicacion': forms.TextInput(attrs={'class': 'form-control'}),
+            'bloque': forms.Select(attrs={'class': 'form-control'}),
+            'criticidad': forms.Select(attrs={'class': 'form-control'}),
+            'estado': forms.Select(attrs={'class': 'form-control'}),
+            'desc_aplicacion': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+        }
+        labels = {
+            'cod_aplicacion': 'Código Aplicación',
+            'nombre_aplicacion': 'Nombre de la Aplicación',
+            'bloque': 'Bloque',
+            'criticidad': 'Criticidad',
+            'desc_aplicacion': 'Descripción',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filtra el queryset del campo 'estado' para mostrar solo los que
+        # son de uso 'Aplicacion'.
+        # Usamos la clase Choices del modelo para evitar errores de tipeo.
+        self.fields['estado'].queryset = Estado.objects.filter(
+            uso_estado=Estado.UsoChoices.APLICACION)
+
+        # Mejora: Si no existen estados de tipo 'Aplicacion', se deshabilita el campo
+        # para evitar errores y guiar al usuario.
+        if not self.fields['estado'].queryset.exists():
+            self.fields['estado'].disabled = True
+            self.fields['estado'].required = False
+            self.fields['estado'].help_text = 'No hay estados de tipo "Aplicacion" disponibles.'
+
+        # Para replicar el comportamiento del HTML original, hacemos estos campos obligatorios
+        # y añadimos un texto de 'placeholder' a los desplegables.
+        self.fields['bloque'].required = True
+        self.fields['criticidad'].required = True
+        self.fields['estado'].required = True
+
+        self.fields['bloque'].empty_label = "Seleccione..."
+        self.fields['criticidad'].empty_label = "Seleccione..."
+        self.fields['estado'].empty_label = "Seleccione..."
 
 
 class ReglaSLAForm(forms.ModelForm):
