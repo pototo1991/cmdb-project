@@ -28,8 +28,7 @@
     {% endif %}
 
     <div class="table-container">
-        <p>Seleccione un archivo de texto (<strong>.txt</strong>) con el formato correcto para realizar la carga masiva inicial de incidencias en el sistema.</p>
-        <p>El archivo debe estar delimitado por pipes (<strong>|</strong>) y contener las columnas esperadas por el sistema.</p>
+        <p>Seleccione un archivo de texto (<strong>.json</strong>)para realizar la carga masiva inicial de incidencias en el sistema.</p>
 
         <form method="post" enctype="multipart/form-data" action="{% url 'gestion:carga_masiva_inicial' %}" class="upload-form">
             {% csrf_token %}

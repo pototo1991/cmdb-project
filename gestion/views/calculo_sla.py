@@ -186,6 +186,9 @@ def calcular_sla_desde_bitacora(incidencia, gestores_norm, horarios, feriados, r
     Returns:
         dict: Un diccionario con los resultados detallados del cálculo.
     """
+    # Este log ahora se imprime siempre, al inicio del análisis de cada incidencia.
+    logger.info(
+        f"\n--- Iniciando análisis de SLA para Incidencia: {incidencia.incidencia} (ID: {incidencia.id}) ---")
     # 1. Validaciones previas para omitir cálculo si no aplica.
     if incidencia.bloque_id == 5 or incidencia.grupo_resolutor_id == 15:
         motivos = ("el bloque es 'Sin Bloque'" if incidencia.bloque_id == 5 else "",
@@ -199,12 +202,10 @@ def calcular_sla_desde_bitacora(incidencia, gestores_norm, horarios, feriados, r
         "Criticidad de la Aplicación", incidencia.aplicacion.criticidad if incidencia.aplicacion else None)] if not valor]
     if campos_faltantes:
         logger.warning(
-            f"Cálculo omitido para Incidencia ID {incidencia.id}. Faltan datos: {', '.join(campos_faltantes)}.")
+            f"Cálculo omitido para Incidencia ID {incidencia.incidencia}. Faltan datos: {', '.join(campos_faltantes)}.")
         return {"cumple_sla": "No Calculado (Faltan Datos)"}
 
     # 2. Inicio del análisis y procesamiento de bitácora
-    logger.info(
-        f"\n--- Analizando Segmentos para Incidencia: {incidencia.incidencia} ---")
     bitacora_entries = parsear_bitacora(incidencia.bitacora, incidencia.id)
     es_critica_24_7 = (normalizar_texto(
         incidencia.severidad.desc_severidad) == "critica")

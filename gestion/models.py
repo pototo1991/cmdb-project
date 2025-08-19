@@ -118,14 +118,12 @@ class Incidencia(models.Model):
     correccion = models.TextField(blank=True)
     solucion_final = models.TextField(blank=True)
     observaciones = models.TextField(blank=True)
-    # usuario_asignado = models.CharField(max_length=150, blank=True)  # Campo eliminado
-
-    demandas = models.TextField(blank=True)
 
     class Workaround(models.TextChoices):
         NO = 'No', 'No'
         SI = 'Sí', 'Sí'
 
+    demandas = models.TextField(null=True, blank=True)
     workaround = models.CharField(
         max_length=2, choices=Workaround.choices, default=Workaround.NO)
 
@@ -173,7 +171,7 @@ class Incidencia(models.Model):
         'Usuario', on_delete=models.SET_NULL, null=True, blank=True, related_name='incidencias_asignadas'
     )
     cumple_sla = models.CharField(
-        max_length=20,
+        max_length=50,
         choices=[('Sí', 'Sí'), ('No', 'No'), ('N/A', 'No Aplica')],
         default='N/A',
         blank=True,

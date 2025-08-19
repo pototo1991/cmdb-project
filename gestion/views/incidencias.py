@@ -3,6 +3,7 @@
 import csv
 import io
 import re
+import json
 from datetime import datetime, timedelta
 
 import pandas as pd
@@ -968,21 +969,32 @@ def _parse_complex_txt_file(file_content):
     return parsed_data
 
 
+def _clean_control_chars(text):
+    """
+    Función auxiliar para limpiar una cadena de texto de caracteres de control invisibles.
+
+    Estos caracteres a menudo causan errores en formatos estrictos como JSON.
+    Esta función los elimina, preservando los caracteres comunes como saltos de línea.
+    """
+    if not isinstance(text, str):
+        return text
+    return re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]', '', text)
+
+
 @login_required
-@transaction.atomic
 def carga_masiva_inicial_view(request):
     """
-    Gestiona la carga masiva de incidencias desde un archivo .txt con formato de reporte.
+    Gestiona la carga masiva de incidencias desde un archivo JSON bien formado.
     """
     if request.method != 'POST':
         return render(request, 'gestion/carga_masiva_inicial.html')
 
     logger.info(
-        f"Usuario '{request.user}' ha iniciado una carga masiva inicial de incidencias.")
+        f"Usuario '{request.user}' ha iniciado una carga masiva inicial desde un archivo JSON.")
     file = request.FILES.get('incidencias_file')
 
-    if not file or not file.name.endswith('.txt'):
-        messages.error(request, 'El archivo debe tener extensión .txt')
+    if not file or not file.name.endswith('.json'):
+        messages.error(request, 'El archivo debe tener extensión .json')
         return redirect('gestion:carga_masiva_inicial')
 
     try:
@@ -997,128 +1009,122 @@ def carga_masiva_inicial_view(request):
         cluster_cache = {str(c.id): c for c in Cluster.objects.all()}
         usuario_cache = {unidecode(u.nombre).lower(
         ).strip(): u for u in Usuario.objects.all()}
-        codigo_cierre_cache = {(cc.cod_cierre, cc.aplicacion_id)
-                                : cc for cc in CodigoCierre.objects.select_related('aplicacion')}
+        codigo_cierre_cache = {(cc.cod_cierre, cc.aplicacion_id)                               : cc for cc in CodigoCierre.objects.select_related('aplicacion')}
+        severidad_cache = {str(s.id): s for s in Severidad.objects.all()}
         logger.info("Cachés creadas con éxito.")
 
-        file_content = file.read().decode('utf-8', errors='replace')
-        all_rows_data = _parse_complex_txt_file(file_content)
+        decoded_file = file.read().decode('utf-8')
+        cleaned_text = _clean_control_chars(decoded_file)
+        all_rows_data = json.loads(cleaned_text)
 
+        if not isinstance(all_rows_data, list):
+            raise ValueError(
+                "El formato JSON es incorrecto. Se esperaba una lista de incidencias `[...]`.")
+
+        logger.info(
+            f"Archivo JSON parseado. Se encontraron {len(all_rows_data)} registros para procesar.")
         errors, created_count, skipped_count = [], 0, 0
 
-        for row_data in all_rows_data:
-            line_num = row_data['original_line_num']
+        for i, row_data in enumerate(all_rows_data, start=1):
             incidencia_id = row_data.get('incidencia')
             try:
-                # --- ✅ VALIDACIÓN REFORZADA AL INICIO ---
                 if not incidencia_id:
                     raise ValueError(
-                        'La columna "incidencia" no puede estar vacía.')
+                        'El atributo "incidencia" es obligatorio.')
 
                 if Incidencia.objects.filter(incidencia=incidencia_id).exists():
                     skipped_count += 1
-                    logger.info(
-                        f"--- Procesando Registro #{line_num} (Incidencia: {incidencia_id}) ---\n  -> OMITIDO: La incidencia ya existe.")
                     continue
 
-                logger.info(
-                    f"--- Procesando Registro #{line_num} (Incidencia: {incidencia_id}) ---")
-
-                # Búsqueda y validación de objetos OBLIGATORIOS
+                # --- VALIDACIÓN EXPLÍCITA DE CAMPOS OBLIGATORIOS ---
                 id_aplicacion = row_data.get('id_aplicacion')
-                aplicacion_obj = aplicacion_cache.get(id_aplicacion)
+                aplicacion_obj = aplicacion_cache.get(str(id_aplicacion))
                 if not aplicacion_obj:
                     raise ValueError(
-                        f"ID de Aplicación no encontrado en la BD: '{id_aplicacion}'")
+                        f"ID de Aplicación no encontrado: '{id_aplicacion}'")
 
                 id_estado = row_data.get('id_estado')
-                estado_obj = estado_cache.get(id_estado)
+                estado_obj = estado_cache.get(str(id_estado))
                 if not estado_obj:
                     raise ValueError(
-                        f"ID de Estado no encontrado en la BD: '{id_estado}'")
+                        f"ID de Estado no encontrado: '{id_estado}'")
 
                 id_impacto = row_data.get('id_impacto')
-                impacto_obj = impacto_cache.get(id_impacto)
+                impacto_obj = impacto_cache.get(str(id_impacto))
                 if not impacto_obj:
                     raise ValueError(
-                        f"ID de Impacto no encontrado en la BD: '{id_impacto}'")
+                        f"ID de Impacto no encontrado: '{id_impacto}'")
 
-                # Búsqueda de objetos opcionales
+                id_criticidad = row_data.get('id_criticidad')
+                severidad_obj = severidad_cache.get(str(id_criticidad))
+                if not severidad_obj:
+                    raise ValueError(
+                        f"ID de Criticidad/Severidad no encontrado: '{id_criticidad}'")
+
+                # --- Búsqueda de objetos opcionales ---
                 grupo_resolutor_obj = grupo_resolutor_cache.get(
-                    row_data.get('id_grupo_resolutor'))
-                interfaz_obj = interfaz_cache.get(row_data.get('id_interfaz'))
-                cluster_obj = cluster_cache.get(row_data.get('id_cluster'))
-                bloque_obj = bloque_cache.get(row_data.get('id_bloque'))
-                severidad_obj = severidad_cache.get(
-                    row_data.get('id_criticidad'))
+                    str(row_data.get('id_grupo_resolutor')))
+                interfaz_obj = interfaz_cache.get(
+                    str(row_data.get('id_interfaz')))
+                cluster_obj = cluster_cache.get(
+                    str(row_data.get('id_cluster')))
+                bloque_obj = bloque_cache.get(str(row_data.get('id_bloque')))
 
                 usuario_asignado_obj = None
-                if nombre_usuario := row_data.get('usuario_asignado', '').strip():
+                if nombre_usuario := row_data.get('usuario_asignado'):
                     usuario_asignado_obj = usuario_cache.get(
                         unidecode(nombre_usuario).lower().strip())
 
                 codigo_cierre_obj = None
-                if cod_cierre_val := row_data.get('cod_cierre', '').strip():
+                if cod_cierre_val := row_data.get('cod_cierre'):
                     codigo_cierre_obj = codigo_cierre_cache.get(
                         (cod_cierre_val, aplicacion_obj.id))
 
-                # Manejo de Fechas
-                fecha_apertura_obj = None
+                # --- Manejo de Fechas ---
+                fecha_apertura_obj, fecha_resolucion_obj = None, None
                 if fecha_str := row_data.get('fecha_apertura'):
                     fecha_apertura_obj = timezone.make_aware(
                         datetime.strptime(fecha_str.split()[0], '%Y-%m-%d'))
-
-                fecha_resolucion_obj = None
                 if fecha_str := row_data.get('fecha_ultima_resolucion'):
                     fecha_resolucion_obj = timezone.make_aware(
                         datetime.strptime(fecha_str.split()[0], '%Y-%m-%d'))
 
-                # Creación del objeto Incidencia
+                # --- Creación del Objeto Incidencia ---
                 Incidencia.objects.create(
-                    incidencia=incidencia_id, aplicacion=aplicacion_obj, estado=estado_obj, impacto=impacto_obj,
+                    incidencia=incidencia_id, aplicacion=aplicacion_obj, estado=estado_obj, impacto=impacto_obj, severidad=severidad_obj,
                     descripcion_incidencia=row_data.get(
                         'descripcion_incidencia', ''),
                     fecha_apertura=fecha_apertura_obj, fecha_ultima_resolucion=fecha_resolucion_obj,
                     grupo_resolutor=grupo_resolutor_obj, interfaz=interfaz_obj, cluster=cluster_obj,
-                    bloque=bloque_obj, severidad=severidad_obj, usuario_asignado=usuario_asignado_obj,
-                    codigo_cierre=codigo_cierre_obj,
+                    bloque=bloque_obj, usuario_asignado=usuario_asignado_obj, codigo_cierre=codigo_cierre_obj,
                     causa=row_data.get('causa', ''), bitacora=row_data.get('bitacora', ''),
                     tec_analisis=row_data.get('tec_analisis', ''), correccion=row_data.get('correccion', ''),
                     solucion_final=row_data.get('solucion_final', ''), observaciones=row_data.get('observaciones', ''),
                     demandas=row_data.get('demandas', ''),
-                    workaround='No' if not row_data.get(
-                        'workaround') else row_data.get('workaround')
+                    workaround=row_data.get('workaround') or 'No'
                 )
                 created_count += 1
-                logger.info(
-                    f"  -> ¡ÉXITO! Incidencia '{incidencia_id}' creada.")
-
             except Exception as e:
                 errors.append(
-                    {'line': line_num, 'incidencia': incidencia_id, 'message': str(e)})
-                logger.error(
-                    f"  -> ERROR en Registro #{line_num} (Incidencia: {incidencia_id}): {e}")
+                    {'line': i, 'incidencia': incidencia_id, 'message': str(e)})
 
-        # --- RESUMEN FINAL DE LA CARGA ---
+        # --- Resumen Final ---
         if errors:
-            transaction.set_rollback(True)
-            logger.warning(
-                f"La carga masiva falló con {len(errors)} errores. Revirtiendo transacción.")
-            messages.error(
-                request, f'La carga fue cancelada. Se encontraron {len(errors)} errores. Ninguna incidencia fue guardada.')
-            return render(request, 'gestion/carga_masiva_inicial.html', {'errors': errors})
+            messages.warning(
+                request, f'Carga completada con {len(errors)} errores. Las incidencias correctas sí fueron guardadas.')
+            return render(request, 'gestion/carga_masiva_inicial.html', {'errors': errors, 'created_count': created_count, 'skipped_count': skipped_count})
 
         final_message = f'Carga masiva completada con éxito. Se crearon {created_count} incidencias nuevas.'
         if skipped_count > 0:
             final_message += f' Se omitieron {skipped_count} incidencias que ya existían.'
-
-        logger.info(final_message)
         messages.success(request, final_message)
         return redirect('gestion:incidencias')
 
+    except json.JSONDecodeError as e:
+        messages.error(request, f"El archivo no es un JSON válido. Error: {e}")
+        return redirect('gestion:carga_masiva_inicial')
     except Exception as e:
         logger.critical(
             f"Error crítico durante la carga masiva: {e}", exc_info=True)
-        messages.error(
-            request, f'Ocurrió un error inesperado al procesar el archivo: {e}')
+        messages.error(request, f'Ocurrió un error inesperado: {e}')
         return redirect('gestion:carga_masiva_inicial')

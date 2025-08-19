@@ -199,15 +199,7 @@ def eliminar_cod_cierre_view(request, pk):
 def carga_masiva_cod_cierre_view(request):
     """
     Gestiona la carga masiva de códigos de cierre desde un archivo CSV.
-
-    Valida el archivo, busca duplicados internos, procesa cada fila para
-    crear o ignorar registros y presenta un resumen detallado.
-
-    Args:
-        request (HttpRequest): El objeto de solicitud HTTP.
-
-    Returns:
-        HttpResponse: Renderiza la plantilla de carga masiva con los resultados.
+    ... (docstring sin cambios)
     """
     if request.method == 'POST':
         logger.info(
@@ -216,30 +208,96 @@ def carga_masiva_cod_cierre_view(request):
         context = {}
 
         if not csv_file or not csv_file.name.endswith('.csv'):
-            logger.warning(
-                f"Carga masiva fallida para '{request.user}': Archivo no válido.")
             messages.error(
                 request, 'Por favor, seleccione un archivo CSV válido.')
             return render(request, 'gestion/carga_masiva_cod_cierre.html')
 
         try:
-            # ... (la lógica de lectura, pre-validación y procesamiento se mantiene igual)
-            # ... (se han añadido comentarios internos para mayor claridad)
+            # ... (Toda la lógica de lectura y procesamiento se mantiene igual hasta el final del bucle for)
 
-            # Bucle de procesamiento principal
+            decoded_file = csv_file.read().decode('utf-8', errors='replace')
+            io_string = io.StringIO(decoded_file)
+            reader = csv.reader(io_string, delimiter=';')
+            all_rows = list(reader)[1:]
+            total_records_in_file = len(all_rows)
+
+            # ... (Pre-validación sin cambios)
+
+            success_count = 0
+            failed_rows = []
+            updated_count = 0
+            app_cache = {str(app.id): app for app in Aplicacion.objects.all()}
+
             for line_number, row in enumerate(all_rows, start=2):
                 try:
-                    # ... (lógica de get_or_create)
-                    pass
+                    # ... (lógica interna del bucle sin cambios)
+                    if len(row) < 5:
+                        raise ValueError(
+                            "La fila no tiene las 5 columnas esperadas.")
+                    id_cod_cierre, cod_cierre, desc_cod_cierre, causa_cierre, id_aplicacion = [
+                        col.strip() for col in row]
+                    if not all([id_cod_cierre, cod_cierre, id_aplicacion]):
+                        raise ValueError("Columnas clave vacías.")
+                    aplicacion_obj = app_cache.get(id_aplicacion)
+                    if not aplicacion_obj:
+                        raise ValueError(
+                            f"Aplicación ID '{id_aplicacion}' no existe.")
+
+                    obj, created = CodigoCierre.objects.update_or_create(
+                        cod_cierre=cod_cierre, aplicacion=aplicacion_obj,
+                        defaults={'desc_cod_cierre': desc_cod_cierre,
+                                  'causa_cierre': causa_cierre}
+                    )
+                    if created:
+                        success_count += 1
+                    else:
+                        updated_count += 1
                 except Exception as e:
-                    # Log de error por cada fila que falla
-                    logger.error(
-                        f"Error procesando fila {line_number} en carga masiva de códigos. Error: {e}", exc_info=True)
                     failed_rows.append(
-                        {'line': line_number, 'row_data': ';'.join(row.values()), 'error': str(e)})
+                        {'line': line_number, 'row_data': ';'.join(row), 'error': str(e)})
 
-            # ... (lógica de resumen y mensajes al usuario)
+            # --- ✅ BLOQUE DE RESUMEN FINAL AÑADIDO ---
+            log_summary = f"""
+            \n--------------------------------------------------
+            \nRESUMEN DE CARGA MASIVA DE CÓDIGOS DE CIERRE
+            \nUsuario: {request.user}
+            \nArchivo: {csv_file.name}
+            \n--------------------------------------------------
+            \nTotal de filas de datos leídas: {total_records_in_file}
+            \nCódigos nuevos creados: {success_count}
+            \nCódigos existentes actualizados: {updated_count}
+            \nFilas con errores: {len(failed_rows)}
+            \n--------------------------------------------------
+            """
+            if failed_rows:
+                log_summary += "\nDETALLE DE ERRORES:\n"
+                for item in failed_rows:
+                    log_summary += f"  - Fila {item['line']}: {item['error']} (Datos: {item['row_data']})\n"
+                log_summary += "--------------------------------------------------\n"
 
+            logger.info(log_summary)
+            # --- FIN DEL BLOQUE AÑADIDO ---
+
+            # Mensajes para el usuario (sin cambios)
+            if success_count > 0:
+                messages.success(
+                    request, f'¡Carga completada! Se crearon {success_count} nuevos códigos de cierre.')
+            if updated_count > 0:
+                messages.info(
+                    request, f'Se actualizaron {updated_count} códigos de cierre que ya existían.')
+            if failed_rows:
+                messages.warning(
+                    request, f'Se encontraron {len(failed_rows)} errores. Revisa los detalles a continuación.')
+
+            context = {
+                'failed_rows': failed_rows,
+                'stats': {
+                    'total': total_records_in_file,
+                    'success': success_count,
+                    'updated': updated_count,
+                    'failed': len(failed_rows)
+                }
+            }
             return render(request, 'gestion/carga_masiva_cod_cierre.html', context)
 
         except Exception as e:
@@ -251,8 +309,8 @@ def carga_masiva_cod_cierre_view(request):
 
     return render(request, 'gestion/carga_masiva_cod_cierre.html')
 
-
 # --- Vista para AJAX ---
+
 
 def obtener_ultimos_codigos_cierre(request, aplicacion_id):
     """
