@@ -167,42 +167,38 @@ def _timedelta_to_hms(td):
 def calcular_sla_desde_bitacora(incidencia, gestores_norm, horarios, feriados, reglas_sla):
     """
     Orquesta el cálculo completo del SLA para una única incidencia, generando un log detallado.
-
-    Esta es la función central que aplica toda la lógica de negocio:
-    1. Valida si la incidencia aplica para SLA o debe ser omitida.
-    2. Parsea la bitácora para obtener los segmentos de tiempo.
-    3. Itera sobre los segmentos y decide si el tiempo debe contarse.
-    4. Suma el tiempo efectivo de los segmentos válidos.
-    5. Compara el tiempo total con la regla de SLA correspondiente.
-    6. Devuelve un diccionario con todos los resultados del cálculo.
-
-    Args:
-        incidencia (Incidencia): La instancia de la incidencia.
-        gestores_norm (set): Conjunto de nombres de usuario de gestores normalizados.
-        horarios (dict): Diccionario de horarios laborales.
-        feriados (set): Conjunto de fechas de días feriados.
-        reglas_sla (dict): Diccionario con las reglas de SLA.
-
-    Returns:
-        dict: Un diccionario con los resultados detallados del cálculo.
     """
-    # Este log ahora se imprime siempre, al inicio del análisis de cada incidencia.
     logger.info(
         f"\n--- Iniciando análisis de SLA para Incidencia: {incidencia.incidencia} (ID: {incidencia.id}) ---")
-    # 1. Validaciones previas para omitir cálculo si no aplica.
-    if incidencia.bloque_id == 5 or incidencia.grupo_resolutor_id == 15:
-        motivos = ("el bloque es 'Sin Bloque'" if incidencia.bloque_id == 5 else "",
-                   "el grupo resolutor es 'INDRA_D'" if incidencia.grupo_resolutor_id == 15 else "")
-        razon_log = " y ".join(filter(None, motivos))
-        logger.info(
-            f"Cálculo omitido para Incidencia ID {incidencia.id} porque {razon_log}.")
+
+    # --- 1. VALIDACIONES PREVIAS (LÓGICA MODIFICADA) ---
+
+    # --- CAMBIO: Se define la lista de IDs de grupos que SÍ se incluyen en el cálculo.
+    GRUPOS_SLA_INCLUIDOS = {7, 11, 12, 13, 14, 15}
+
+    # Se omite el cálculo si el bloque es 5 O si el grupo resolutor NO está en la lista de incluidos.
+    if (incidencia.bloque_id == 5 or
+            incidencia.grupo_resolutor_id not in GRUPOS_SLA_INCLUIDOS):
+
+        # Lógica mejorada para un mensaje de log más claro
+        motivo = ""
+        if incidencia.bloque_id == 5:
+            motivo = "el bloque es 'Sin Bloque'"
+        elif incidencia.grupo_resolutor:
+            motivo = f"el grupo resolutor '{incidencia.grupo_resolutor.desc_grupo_resol}' no está incluido en el cálculo"
+        else:
+            # Este caso cubre incidencias sin grupo resolutor asignado.
+            motivo = "la incidencia no tiene un grupo resolutor válido para el cálculo"
+
+        logger.info(f"-> CÁLCULO OMITIDO porque {motivo}.")
         return {"cumple_sla": "No Aplica"}
 
+    # El resto de las validaciones (por falta de datos) no cambia.
     campos_faltantes = [campo for campo, valor in [("Severidad", incidencia.severidad), ("Aplicación", incidencia.aplicacion), (
         "Criticidad de la Aplicación", incidencia.aplicacion.criticidad if incidencia.aplicacion else None)] if not valor]
     if campos_faltantes:
         logger.warning(
-            f"Cálculo omitido para Incidencia ID {incidencia.incidencia}. Faltan datos: {', '.join(campos_faltantes)}.")
+            f"-> CÁLCULO OMITIDO. Faltan datos: {', '.join(campos_faltantes)}.")
         return {"cumple_sla": "No Calculado (Faltan Datos)"}
 
     # 2. Inicio del análisis y procesamiento de bitácora

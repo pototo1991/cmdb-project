@@ -19,3 +19,11 @@ db.sqlite3
 # Archivos de registro
 *.log
 *.log.*
+.__logs.lock
+
+# Archivos de medios (subidos por usuarios)
+media/
+
+# Directorio de archivos estáticos para producción (generado por collectstatic)
+staticfiles/
+static_root/

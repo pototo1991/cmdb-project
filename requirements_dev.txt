@@ -1,0 +1,9 @@
+-r requirements.txt
+black==24.4.2
+
+# Dependencias específicas para el desarrollo en Windows
+pywin32==311
+waitress==3.0.0
+
+# Herramientas de calidad de código
+ruff==0.5.5
